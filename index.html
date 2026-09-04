@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Generador DCDT</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-weight: bold; margin-bottom: 5px; }
+    input[type="text"], input[type="date"] { width: 100%; padding: 8px; box-sizing: border-box; }
+    button { padding: 10px 15px; background-color: #007bff; color: white; border: none; cursor: pointer; }
+    button:hover { background-color: #0056b3; }
+    .result { margin-top: 20px; padding: 15px; border: 1px solid #ccc; background-color: #f9f9f9; display: none; }
+  </style>
+</head>
+<body>
+
+  <div id="dcdt-addin-container">
+    <h2>Generar Documento de Control Digital de Transporte (DCDT)</h2>
+    
+    <div class="form-group">
+      <label for="apiKey">DCDT API Key</label>
+      <input type="text" id="apiKey" placeholder="Introduce tu API Key de DCDT">
+    </div>
+
+    <div class="form-group">
+      <label for="transportDate">Fecha de Transporte</label>
+      <input type="date" id="transportDate">
+    </div>
+    
+    <div class="form-group">
+      <label for="originCity">Ciudad de Origen</label>
+      <input type="text" id="originCity" value="Madrid">
+    </div>
+
+    <div class="form-group">
+      <label for="destinationCity">Ciudad de Destino</label>
+      <input type="text" id="destinationCity" value="Barcelona">
+    </div>
+
+    <button id="generateBtn">Generar DCDT</button>
+    
+    <div id="resultBox" class="result">
+      <h3 id="resultStatus"></h3>
+      <p id="resultDetails"></p>
+      <a id="resultPdf" href="#" target="_blank" style="display:none;">Descargar PDF</a>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

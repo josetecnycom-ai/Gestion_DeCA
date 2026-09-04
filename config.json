@@ -1,0 +1,14 @@
+{
+  "name": "Generador de DCDT",
+  "supportEmail": "soporte@ejemplo.com",
+  "version": "1.0.0",
+  "items": [{
+    "url": "https://[tu-usuario].github.io/[tu-repositorio]/index.html",
+    "path": "ActivityLink/",
+    "menuName": {
+      "en": "Generate DCDT",
+      "es": "Generar DCDT"
+    },
+    "icon": ""
+  }]
+}
