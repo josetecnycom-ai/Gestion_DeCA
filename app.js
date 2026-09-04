@@ -1,110 +1,128 @@
 geotab.addin.dcdtGenerator = function (api, state) {
-  
-  // Variables to hold Geotab data
-  let currentUser;
-  
   return {
-    /**
-     * initialize() is called only once when the Add-In is first loaded.
-     * @param {object} api The GeotabApi object for making calls to MyGeotab.
-     * @param {object} state The Initial state of the Add-In.
-     * @param {function} initializeCallback Call this when your initialize route is complete.
-     */
     initialize: function (api, state, initializeCallback) {
-      // Setup the event listener for the generate button
       document.getElementById('generateBtn').addEventListener('click', function() {
         generateDCDT(api);
       });
-
-      // Get current user info to pre-fill or just to test API
-      api.getSession(function(session) {
-        currentUser = session.userName;
-      });
-
       initializeCallback();
     },
 
-    /**
-     * focus() is called whenever the Add-In receives focus.
-     * @param {object} api The GeotabApi object for making calls to MyGeotab.
-     * @param {object} state The state of the Add-In.
-     */
     focus: function (api, state) {
-      // Set today's date as default
-      document.getElementById('transportDate').valueAsDate = new Date();
+      if (!document.getElementById('transportDate').value) {
+        document.getElementById('transportDate').valueAsDate = new Date();
+      }
     },
 
-    /**
-     * blur() is called whenever the user navigates away from the Add-In.
-     * @param {object} api The GeotabApi object for making calls to MyGeotab.
-     * @param {object} state The state of the Add-In.
-     */
     blur: function (api, state) {
     }
   };
 };
 
 function generateDCDT(api) {
-  const apiKey = document.getElementById('apiKey').value;
-  const transportDate = document.getElementById('transportDate').value;
-  const originCity = document.getElementById('originCity').value;
-  const destinationCity = document.getElementById('destinationCity').value;
+  const apiKey = document.getElementById('apiKey').value.trim();
 
   if (!apiKey) {
     alert("Por favor, introduce tu API Key de DCDT.");
     return;
   }
 
-  // Example payload based on DCDT API documentation
-  const payload = {
-    "loader": {
-      "name": "Empresa Cargadora Ej",
-      "taxId": "B12345678",
-      "city": originCity,
-      "country": "ES"
-    },
-    "carrier": {
-      "name": "Transportes Geotab S.L.",
-      "taxId": "A87654321",
-      "city": "Madrid",
-      "country": "ES"
-    },
-    "vehicle": {
-      "transportSetType": 1,
-      "plateNumber": "1234ABC"
-    },
-    "driver": {
-      "fullName": "Conductor Principal",
-      "idNumber": "12345678A"
-    },
-    "origin": {
-      "city": originCity,
-      "country": "ES"
-    },
-    "destination": {
-      "city": destinationCity,
-      "country": "ES"
-    },
-    "transport": {
-      "transportDate": transportDate
-    },
-    "cargo": {
-      "description": "Mercancía general",
-      "weight": 1000,
-      "weightUnit": "kg"
-    },
-    "leaveAsDraft": true // true para pruebas sin emitir notificaciones
+  // Helper to get value or undefined if empty
+  const val = (id) => {
+    const v = document.getElementById(id).value.trim();
+    return v === "" ? undefined : v;
   };
+  
+  // Helper to get numbers
+  const num = (id) => {
+    const v = document.getElementById(id).value.trim();
+    return v === "" ? undefined : Number(v);
+  };
+
+  const payload = {
+    loader: {
+      name: val('loaderName'),
+      taxId: val('loaderTaxId'),
+      address: val('loaderAddress'),
+      city: val('loaderCity'),
+      postalCode: val('loaderPostalCode'),
+      country: val('loaderCountry') || 'ES'
+    },
+    carrier: {
+      name: val('carrierName'),
+      taxId: val('carrierTaxId'),
+      city: val('carrierCity'),
+      country: val('carrierCountry') || 'ES'
+    },
+    vehicle: {
+      transportSetType: num('transportSetType'),
+      plateNumber: val('plateNumber'),
+      trailerPlateNumber: val('trailerPlateNumber')
+    },
+    driver: {
+      fullName: val('driverName'),
+      idNumber: val('driverId'),
+      phone: val('driverPhone')
+    },
+    origin: {
+      city: val('originCity'),
+      country: val('originCountry') || 'ES'
+    },
+    destination: {
+      city: val('destinationCity'),
+      country: val('destinationCountry') || 'ES'
+    },
+    transport: {
+      transportDate: val('transportDate')
+    },
+    cargo: {
+      description: val('cargoDesc'),
+      weight: num('cargoWeight'),
+      weightUnit: val('cargoWeightUnit'),
+      packagesCount: num('cargoPackages'),
+      packagingType: val('cargoPackageType')
+    },
+    leaveAsDraft: document.getElementById('leaveAsDraft').checked
+  };
+
+  // Optional objects
+  if (val('recipientName')) {
+    payload.recipient = {
+      name: val('recipientName'),
+      taxId: val('recipientTaxId'),
+      city: val('recipientCity'),
+      country: val('recipientCountry') || 'ES'
+    };
+  }
+  
+  if (val('transportDate') && val('loadingDate')) {
+    payload.transport.loadingDate = val('loadingDate');
+  }
+
+  if (val('notifyEmail')) {
+    payload.notifications = [
+      { channel: "email", recipient: val('notifyEmail') }
+    ];
+  }
+
+  if (val('referenceCode')) {
+    payload.references = {
+      reference: val('referenceCode')
+    };
+  }
+
+  // Cleanup undefined values to keep JSON clean
+  const cleanPayload = JSON.parse(JSON.stringify(payload));
 
   const resultBox = document.getElementById('resultBox');
   const resultStatus = document.getElementById('resultStatus');
   const resultDetails = document.getElementById('resultDetails');
   const resultPdf = document.getElementById('resultPdf');
 
-  resultStatus.innerText = "Generando...";
-  resultDetails.innerText = "";
+  resultStatus.innerText = "Enviando datos a Davinchi...";
+  resultDetails.innerText = JSON.stringify(cleanPayload, null, 2);
   resultPdf.style.display = 'none';
   resultBox.style.display = 'block';
+  resultBox.className = 'result'; // remove success/error classes
 
   fetch('https://dcdt.davinchi.es/api/v1/documents', {
     method: 'POST',
@@ -112,32 +130,33 @@ function generateDCDT(api) {
       'Content-Type': 'application/json',
       'X-API-Key': apiKey
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(cleanPayload)
   })
   .then(response => response.json())
   .then(data => {
     if (data.success || (data.success === false && data.documentId)) {
-       // Si success es false pero hay documentId, puede ser un borrador creado.
-       // Según la doc, si leaveAsDraft=true o incomplete=true.
+       resultBox.classList.add(data.success ? 'success' : 'success'); // using green even for drafts
        if (data.publicUrl || data.pdfUrl) {
-         resultStatus.innerText = "¡DCDT Generado!";
-         resultDetails.innerText = "Documento ID: " + data.documentId;
+         resultStatus.innerText = "¡DCDT Generado Correctamente!";
+         resultDetails.innerText = "Documento DCDT ID: " + data.documentId + "\nMatrícula: " + cleanPayload.vehicle.plateNumber;
          
          if (data.pdfUrl) {
            resultPdf.href = data.pdfUrl;
            resultPdf.style.display = 'inline-block';
          }
        } else {
-         resultStatus.innerText = "Borrador Creado";
-         resultDetails.innerText = "Documento ID: " + data.documentId + "\nIncompleto: " + data.incomplete;
+         resultStatus.innerText = "Borrador Creado en Davinchi";
+         resultDetails.innerText = "Se creó como borrador (DCDT ID: " + data.documentId + "). \nFaltan datos obligatorios o 'leaveAsDraft' está activo.\n\n" + (data.errors ? JSON.stringify(data.errors, null, 2) : "");
        }
     } else {
-      resultStatus.innerText = "Error";
+      resultBox.classList.add('error');
+      resultStatus.innerText = "Error en la validación (422/500)";
       resultDetails.innerText = JSON.stringify(data.errors || data, null, 2);
     }
   })
   .catch(error => {
-    resultStatus.innerText = "Error de red";
-    resultDetails.innerText = error.message;
+    resultBox.classList.add('error');
+    resultStatus.innerText = "Error de red / CORS";
+    resultDetails.innerText = "La petición fue bloqueada por el navegador o hubo un fallo de red.\nError exacto: " + error.message;
   });
 }

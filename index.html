@@ -2,48 +2,145 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Generador DCDT</title>
+  <title>Generador DCDT Completo</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; font-weight: bold; margin-bottom: 5px; }
-    input[type="text"], input[type="date"] { width: 100%; padding: 8px; box-sizing: border-box; }
-    button { padding: 10px 15px; background-color: #007bff; color: white; border: none; cursor: pointer; }
+    body { font-family: sans-serif; padding: 20px; background-color: #f4f6f8; color: #333; }
+    h2 { color: #00527c; border-bottom: 2px solid #ccc; padding-bottom: 5px; }
+    .section { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .section-title { font-weight: bold; margin-bottom: 15px; font-size: 1.1em; color: #007bff; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .grid-full { grid-column: span 2; }
+    .form-group { display: flex; flex-direction: column; }
+    label { font-size: 0.9em; font-weight: bold; margin-bottom: 5px; color: #555; }
+    input[type="text"], input[type="date"], input[type="number"], select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    .checkbox-group { display: flex; align-items: center; gap: 10px; font-weight: normal; }
+    button { padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; width: 100%; margin-top: 10px;}
     button:hover { background-color: #0056b3; }
-    .result { margin-top: 20px; padding: 15px; border: 1px solid #ccc; background-color: #f9f9f9; display: none; }
+    .result { margin-top: 20px; padding: 15px; border-radius: 4px; border: 1px solid #ccc; background-color: #e9ecef; display: none; }
+    .result.success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+    .result.error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
   </style>
 </head>
 <body>
 
   <div id="dcdt-addin-container">
-    <h2>Generar Documento de Control Digital de Transporte (DCDT)</h2>
+    <h2>Generador DCDT (Davinchi)</h2>
     
-    <div class="form-group">
-      <label for="apiKey">DCDT API Key</label>
-      <input type="text" id="apiKey" placeholder="Introduce tu API Key de DCDT">
+    <div class="section">
+      <div class="section-title">1. Configuración y Fechas</div>
+      <div class="grid">
+        <div class="form-group grid-full">
+          <label for="apiKey">DCDT API Key</label>
+          <input type="text" id="apiKey" placeholder="Requerido para conectar con Davinchi">
+        </div>
+        <div class="form-group">
+          <label for="transportDate">Fecha de Transporte (*)</label>
+          <input type="date" id="transportDate" required>
+        </div>
+        <div class="form-group">
+          <label for="loadingDate">Fecha de Carga (Opcional)</label>
+          <input type="date" id="loadingDate">
+        </div>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label for="transportDate">Fecha de Transporte</label>
-      <input type="date" id="transportDate">
-    </div>
-    
-    <div class="form-group">
-      <label for="originCity">Ciudad de Origen</label>
-      <input type="text" id="originCity" value="Madrid">
+    <div class="section">
+      <div class="section-title">2. Partes Implicadas</div>
+      
+      <h4>Cargador / Expedidor (*)</h4>
+      <div class="grid">
+        <div class="form-group"><label>Razón Social (*)</label><input type="text" id="loaderName" value="Mi Empresa Cargadora"></div>
+        <div class="form-group"><label>CIF/NIF</label><input type="text" id="loaderTaxId"></div>
+        <div class="form-group grid-full"><label>Dirección</label><input type="text" id="loaderAddress"></div>
+        <div class="form-group"><label>Ciudad (*)</label><input type="text" id="loaderCity" value="Madrid"></div>
+        <div class="form-group"><label>Código Postal</label><input type="text" id="loaderPostalCode"></div>
+        <div class="form-group"><label>País (* ISO-2)</label><input type="text" id="loaderCountry" value="ES"></div>
+      </div>
+
+      <h4>Transportista (*)</h4>
+      <div class="grid">
+        <div class="form-group"><label>Razón Social (*)</label><input type="text" id="carrierName" value="Mi Empresa de Transporte"></div>
+        <div class="form-group"><label>CIF/NIF</label><input type="text" id="carrierTaxId"></div>
+        <div class="form-group"><label>Ciudad (*)</label><input type="text" id="carrierCity" value="Madrid"></div>
+        <div class="form-group"><label>País (* ISO-2)</label><input type="text" id="carrierCountry" value="ES"></div>
+      </div>
+
+      <h4>Destinatario (Opcional)</h4>
+      <div class="grid">
+        <div class="form-group"><label>Razón Social</label><input type="text" id="recipientName"></div>
+        <div class="form-group"><label>CIF/NIF</label><input type="text" id="recipientTaxId"></div>
+        <div class="form-group"><label>Ciudad</label><input type="text" id="recipientCity"></div>
+        <div class="form-group"><label>País (ISO-2)</label><input type="text" id="recipientCountry" value="ES"></div>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label for="destinationCity">Ciudad de Destino</label>
-      <input type="text" id="destinationCity" value="Barcelona">
+    <div class="section">
+      <div class="section-title">3. Vehículo y Conductores</div>
+      <div class="grid">
+        <div class="form-group">
+          <label>Tipo de Conjunto</label>
+          <select id="transportSetType">
+            <option value="1">1 = Rígido</option>
+            <option value="2">2 = Ligero</option>
+            <option value="3" selected>3 = Tractora + Semirremolque</option>
+            <option value="4">4 = Camión + Remolque</option>
+            <option value="5">5 = Doble Remolque</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Matrícula Principal (*)</label><input type="text" id="plateNumber"></div>
+        <div class="form-group"><label>Matrícula Remolque</label><input type="text" id="trailerPlateNumber"></div>
+        <div class="form-group"><label>Conductor Principal (*)</label><input type="text" id="driverName"></div>
+        <div class="form-group"><label>DNI/NIE Conductor</label><input type="text" id="driverId"></div>
+        <div class="form-group"><label>Teléfono Conductor</label><input type="text" id="driverPhone"></div>
+      </div>
     </div>
 
-    <button id="generateBtn">Generar DCDT</button>
+    <div class="section">
+      <div class="section-title">4. Ruta (Envío Único)</div>
+      <div class="grid">
+        <div class="form-group"><label>Origen: Ciudad (*)</label><input type="text" id="originCity" value="Madrid"></div>
+        <div class="form-group"><label>Origen: País (*)</label><input type="text" id="originCountry" value="ES"></div>
+        <div class="form-group"><label>Destino: Ciudad (*)</label><input type="text" id="destinationCity" value="Barcelona"></div>
+        <div class="form-group"><label>Destino: País (*)</label><input type="text" id="destinationCountry" value="ES"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">5. Mercancía (Envío Único)</div>
+      <div class="grid">
+        <div class="form-group grid-full"><label>Descripción de Mercancía (*)</label><input type="text" id="cargoDesc" value="Mercancía general"></div>
+        <div class="form-group"><label>Peso</label><input type="number" id="cargoWeight" value="1000"></div>
+        <div class="form-group"><label>Unidad de Peso</label><input type="text" id="cargoWeightUnit" value="kg"></div>
+        <div class="form-group"><label>Cantidad de bultos</label><input type="number" id="cargoPackages"></div>
+        <div class="form-group"><label>Tipo de embalaje</label><input type="text" id="cargoPackageType" placeholder="Ej: Pallet"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">6. Opciones Adicionales</div>
+      <div class="grid">
+        <div class="form-group">
+          <label>Notificación por Email</label>
+          <input type="text" id="notifyEmail" placeholder="correo@ejemplo.com">
+        </div>
+        <div class="form-group">
+          <label>Referencia de Albarán</label>
+          <input type="text" id="referenceCode" placeholder="Ej: ALB-123">
+        </div>
+        <div class="form-group grid-full">
+          <label class="checkbox-group">
+            <input type="checkbox" id="leaveAsDraft"> Crear solo como BORRADOR (No emite PDF público ni envía notificaciones)
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <button id="generateBtn">Crear Documento DCDT</button>
     
     <div id="resultBox" class="result">
       <h3 id="resultStatus"></h3>
-      <p id="resultDetails"></p>
-      <a id="resultPdf" href="#" target="_blank" style="display:none;">Descargar PDF</a>
+      <pre id="resultDetails" style="white-space: pre-wrap; font-size: 0.9em;"></pre>
+      <a id="resultPdf" href="#" target="_blank" style="display:none; color: #0056b3; font-weight: bold; margin-top: 10px;">📄 Abrir/Descargar PDF Público</a>
     </div>
   </div>
 
