@@ -2,146 +2,609 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Generador DCDT Completo</title>
+  <title>Generador DCDT</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; background-color: #f4f6f8; color: #333; }
-    h2 { color: #00527c; border-bottom: 2px solid #ccc; padding-bottom: 5px; }
-    .section { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .section-title { font-weight: bold; margin-bottom: 15px; font-size: 1.1em; color: #007bff; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    .grid-full { grid-column: span 2; }
-    .form-group { display: flex; flex-direction: column; }
-    label { font-size: 0.9em; font-weight: bold; margin-bottom: 5px; color: #555; }
-    input[type="text"], input[type="date"], input[type="number"], select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-    .checkbox-group { display: flex; align-items: center; gap: 10px; font-weight: normal; }
-    button { padding: 12px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1em; font-weight: bold; width: 100%; margin-top: 10px;}
-    button:hover { background-color: #0056b3; }
-    .result { margin-top: 20px; padding: 15px; border-radius: 4px; border: 1px solid #ccc; background-color: #e9ecef; display: none; }
-    .result.success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
-    .result.error { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+    /* ============================================================
+       DCDT Add-in Styles — reinforced with !important for Geotab
+       ============================================================ */
+
+    /* Reset dentro del contenedor */
+    #dcdt-addin-container *,
+    #dcdt-addin-container *::before,
+    #dcdt-addin-container *::after {
+      box-sizing: border-box !important;
+    }
+
+    #dcdt-addin-container {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif !important;
+      max-width: 960px !important;
+      margin: 0 auto !important;
+      padding: 16px 20px !important;
+      color: #1e293b !important;
+      background: transparent !important;
+    }
+
+    /* — Header / Title — */
+    #dcdt-addin-container .dcdt-header {
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+      margin-bottom: 20px !important;
+      padding-bottom: 12px !important;
+      border-bottom: 3px solid #2563eb !important;
+    }
+
+    #dcdt-addin-container .dcdt-header h2 {
+      margin: 0 !important;
+      padding: 0 !important;
+      font-size: 1.5em !important;
+      font-weight: 700 !important;
+      color: #1e3a5f !important;
+      letter-spacing: -0.02em !important;
+    }
+
+    #dcdt-addin-container .dcdt-header .dcdt-badge {
+      display: inline-block !important;
+      padding: 3px 10px !important;
+      background: #2563eb !important;
+      color: #fff !important;
+      border-radius: 12px !important;
+      font-size: 0.7em !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.05em !important;
+    }
+
+    /* — Section Cards — */
+    #dcdt-addin-container .dcdt-section {
+      background: #ffffff !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 10px !important;
+      margin-bottom: 16px !important;
+      overflow: hidden !important;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04) !important;
+    }
+
+    #dcdt-addin-container .dcdt-section-header {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      padding: 10px 16px !important;
+      background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%) !important;
+      color: #ffffff !important;
+      font-size: 0.95em !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.02em !important;
+      margin: 0 !important;
+      border: none !important;
+    }
+
+    #dcdt-addin-container .dcdt-section-header .icon {
+      font-size: 1.1em !important;
+    }
+
+    #dcdt-addin-container .dcdt-section-body {
+      padding: 16px !important;
+    }
+
+    /* — Sub-section titles (e.g. Cargador, Transportista) — */
+    #dcdt-addin-container .dcdt-subsection-title {
+      font-size: 0.9em !important;
+      font-weight: 700 !important;
+      color: #2563eb !important;
+      margin: 0 0 10px 0 !important;
+      padding: 0 0 6px 0 !important;
+      border-bottom: 2px solid #e2e8f0 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+    }
+
+    #dcdt-addin-container .dcdt-subsection-title .optional-tag {
+      font-weight: 400 !important;
+      color: #94a3b8 !important;
+      font-size: 0.85em !important;
+    }
+
+    #dcdt-addin-container .dcdt-subsection-divider {
+      margin-top: 16px !important;
+    }
+
+    /* — Grid Layout — */
+    #dcdt-addin-container .dcdt-grid {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 12px 16px !important;
+    }
+
+    #dcdt-addin-container .dcdt-grid-3 {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr 1fr !important;
+      gap: 12px 16px !important;
+    }
+
+    #dcdt-addin-container .dcdt-grid-4 {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr 1fr 1fr !important;
+      gap: 12px 16px !important;
+    }
+
+    #dcdt-addin-container .dcdt-col-full {
+      grid-column: 1 / -1 !important;
+    }
+
+    /* — Form Fields — */
+    #dcdt-addin-container .dcdt-field {
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
+    #dcdt-addin-container .dcdt-field label {
+      font-size: 0.78em !important;
+      font-weight: 600 !important;
+      color: #64748b !important;
+      margin-bottom: 4px !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.04em !important;
+    }
+
+    #dcdt-addin-container .dcdt-field label .req {
+      color: #ef4444 !important;
+      margin-left: 2px !important;
+    }
+
+    #dcdt-addin-container .dcdt-field input[type="text"],
+    #dcdt-addin-container .dcdt-field input[type="date"],
+    #dcdt-addin-container .dcdt-field input[type="number"],
+    #dcdt-addin-container .dcdt-field select {
+      width: 100% !important;
+      padding: 8px 10px !important;
+      border: 1px solid #cbd5e1 !important;
+      border-radius: 6px !important;
+      font-size: 0.9em !important;
+      color: #1e293b !important;
+      background: #f8fafc !important;
+      transition: border-color 0.2s, box-shadow 0.2s !important;
+      outline: none !important;
+      font-family: inherit !important;
+    }
+
+    #dcdt-addin-container .dcdt-field input:focus,
+    #dcdt-addin-container .dcdt-field select:focus {
+      border-color: #2563eb !important;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12) !important;
+      background: #fff !important;
+    }
+
+    #dcdt-addin-container .dcdt-field input::placeholder {
+      color: #94a3b8 !important;
+      font-style: italic !important;
+    }
+
+    /* — Checkbox — */
+    #dcdt-addin-container .dcdt-checkbox-group {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      padding: 10px 12px !important;
+      background: #fef3c7 !important;
+      border: 1px solid #fcd34d !important;
+      border-radius: 6px !important;
+      margin-top: 4px !important;
+    }
+
+    #dcdt-addin-container .dcdt-checkbox-group input[type="checkbox"] {
+      width: 16px !important;
+      height: 16px !important;
+      cursor: pointer !important;
+    }
+
+    #dcdt-addin-container .dcdt-checkbox-group span {
+      font-size: 0.85em !important;
+      font-weight: 500 !important;
+      color: #92400e !important;
+    }
+
+    /* — Submit Button — */
+    #dcdt-addin-container .dcdt-submit-btn {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 8px !important;
+      width: 100% !important;
+      padding: 14px 24px !important;
+      margin-top: 8px !important;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+      color: #ffffff !important;
+      font-size: 1.05em !important;
+      font-weight: 700 !important;
+      border: none !important;
+      border-radius: 8px !important;
+      cursor: pointer !important;
+      letter-spacing: 0.02em !important;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.3) !important;
+      transition: all 0.2s !important;
+    }
+
+    #dcdt-addin-container .dcdt-submit-btn:hover {
+      background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+      box-shadow: 0 4px 12px rgba(37,99,235,0.4) !important;
+      transform: translateY(-1px) !important;
+    }
+
+    #dcdt-addin-container .dcdt-submit-btn:active {
+      transform: translateY(0) !important;
+    }
+
+    /* — Result Box — */
+    #dcdt-addin-container .dcdt-result {
+      margin-top: 16px !important;
+      padding: 16px !important;
+      border-radius: 8px !important;
+      border: 1px solid #e2e8f0 !important;
+      background: #f1f5f9 !important;
+      display: none !important;
+    }
+
+    #dcdt-addin-container .dcdt-result.success {
+      display: block !important;
+      background: #f0fdf4 !important;
+      border-color: #86efac !important;
+    }
+
+    #dcdt-addin-container .dcdt-result.success h3 { color: #166534 !important; }
+
+    #dcdt-addin-container .dcdt-result.error {
+      display: block !important;
+      background: #fef2f2 !important;
+      border-color: #fca5a5 !important;
+    }
+
+    #dcdt-addin-container .dcdt-result.error h3 { color: #991b1b !important; }
+
+    #dcdt-addin-container .dcdt-result h3 {
+      margin: 0 0 8px 0 !important;
+      font-size: 1em !important;
+    }
+
+    #dcdt-addin-container .dcdt-result pre {
+      margin: 0 !important;
+      white-space: pre-wrap !important;
+      word-break: break-word !important;
+      font-size: 0.85em !important;
+      background: rgba(0,0,0,0.03) !important;
+      padding: 10px !important;
+      border-radius: 4px !important;
+    }
+
+    #dcdt-addin-container .dcdt-result .dcdt-pdf-link {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      margin-top: 10px !important;
+      padding: 8px 16px !important;
+      background: #2563eb !important;
+      color: #fff !important;
+      text-decoration: none !important;
+      border-radius: 6px !important;
+      font-weight: 600 !important;
+      font-size: 0.9em !important;
+    }
+
+    #dcdt-addin-container .dcdt-result .dcdt-pdf-link:hover {
+      background: #1d4ed8 !important;
+    }
+
+    /* — Route visual — */
+    #dcdt-addin-container .dcdt-route-row {
+      display: flex !important;
+      align-items: stretch !important;
+      gap: 0 !important;
+    }
+
+    #dcdt-addin-container .dcdt-route-block {
+      flex: 1 !important;
+    }
+
+    #dcdt-addin-container .dcdt-route-arrow {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 0 16px !important;
+      font-size: 1.5em !important;
+      color: #2563eb !important;
+    }
+
+    #dcdt-addin-container .dcdt-route-label {
+      font-size: 0.78em !important;
+      font-weight: 700 !important;
+      color: #64748b !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.04em !important;
+      margin-bottom: 6px !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 4px !important;
+    }
+
+    /* — Responsive — */
+    @media (max-width: 700px) {
+      #dcdt-addin-container .dcdt-grid,
+      #dcdt-addin-container .dcdt-grid-3,
+      #dcdt-addin-container .dcdt-grid-4 {
+        grid-template-columns: 1fr !important;
+      }
+      #dcdt-addin-container .dcdt-route-row {
+        flex-direction: column !important;
+      }
+      #dcdt-addin-container .dcdt-route-arrow {
+        transform: rotate(90deg) !important;
+        padding: 8px 0 !important;
+      }
+    }
   </style>
 </head>
 <body>
 
   <div id="dcdt-addin-container">
-    <h2>Generador DCDT (Davinchi)</h2>
-    
-    <div class="section">
-      <div class="section-title">1. Configuración y Fechas</div>
-      <div class="grid">
-        <div class="form-group grid-full">
-          <label for="apiKey">DCDT API Key</label>
-          <input type="text" id="apiKey" placeholder="Requerido para conectar con Davinchi">
-        </div>
-        <div class="form-group">
-          <label for="transportDate">Fecha de Transporte (*)</label>
-          <input type="date" id="transportDate" required>
-        </div>
-        <div class="form-group">
-          <label for="loadingDate">Fecha de Carga (Opcional)</label>
-          <input type="date" id="loadingDate">
+
+    <!-- ═══ Header ═══ -->
+    <div class="dcdt-header">
+      <h2>📋 Generador DCDT</h2>
+      <span class="dcdt-badge">Davinchi</span>
+    </div>
+
+    <!-- ═══ 1. Fechas ═══ -->
+    <div class="dcdt-section">
+      <div class="dcdt-section-header">
+        <span class="icon">📅</span> 1. Fechas
+      </div>
+      <div class="dcdt-section-body">
+        <div class="dcdt-grid">
+          <div class="dcdt-field">
+            <label>Fecha de Transporte <span class="req">*</span></label>
+            <input type="date" id="transportDate" required>
+          </div>
+          <div class="dcdt-field">
+            <label>Fecha de Carga <span class="optional-tag">(Opcional)</span></label>
+            <input type="date" id="loadingDate">
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="section">
-      <div class="section-title">2. Partes Implicadas</div>
-      
-      <h4>Cargador / Expedidor (*)</h4>
-      <div class="grid">
-        <div class="form-group"><label>Razón Social (*)</label><input type="text" id="loaderName" value="Mi Empresa Cargadora"></div>
-        <div class="form-group"><label>CIF/NIF</label><input type="text" id="loaderTaxId"></div>
-        <div class="form-group grid-full"><label>Dirección</label><input type="text" id="loaderAddress"></div>
-        <div class="form-group"><label>Ciudad (*)</label><input type="text" id="loaderCity" value="Madrid"></div>
-        <div class="form-group"><label>Código Postal</label><input type="text" id="loaderPostalCode"></div>
-        <div class="form-group"><label>País (* ISO-2)</label><input type="text" id="loaderCountry" value="ES"></div>
+    <!-- ═══ 2. Partes Implicadas ═══ -->
+    <div class="dcdt-section">
+      <div class="dcdt-section-header">
+        <span class="icon">🏢</span> 2. Partes Implicadas
       </div>
+      <div class="dcdt-section-body">
 
-      <h4>Transportista (*)</h4>
-      <div class="grid">
-        <div class="form-group"><label>Razón Social (*)</label><input type="text" id="carrierName" value="Mi Empresa de Transporte"></div>
-        <div class="form-group"><label>CIF/NIF</label><input type="text" id="carrierTaxId"></div>
-        <div class="form-group"><label>Ciudad (*)</label><input type="text" id="carrierCity" value="Madrid"></div>
-        <div class="form-group"><label>País (* ISO-2)</label><input type="text" id="carrierCountry" value="ES"></div>
-      </div>
-
-      <h4>Destinatario (Opcional)</h4>
-      <div class="grid">
-        <div class="form-group"><label>Razón Social</label><input type="text" id="recipientName"></div>
-        <div class="form-group"><label>CIF/NIF</label><input type="text" id="recipientTaxId"></div>
-        <div class="form-group"><label>Ciudad</label><input type="text" id="recipientCity"></div>
-        <div class="form-group"><label>País (ISO-2)</label><input type="text" id="recipientCountry" value="ES"></div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">3. Vehículo y Conductores</div>
-      <div class="grid">
-        <div class="form-group">
-          <label>Tipo de Conjunto</label>
-          <select id="transportSetType">
-            <option value="1">1 = Rígido</option>
-            <option value="2">2 = Ligero</option>
-            <option value="3" selected>3 = Tractora + Semirremolque</option>
-            <option value="4">4 = Camión + Remolque</option>
-            <option value="5">5 = Doble Remolque</option>
-          </select>
+        <!-- Cargador -->
+        <div class="dcdt-subsection-title">🔸 Cargador / Expedidor <span class="req">*</span></div>
+        <div class="dcdt-grid-3">
+          <div class="dcdt-field">
+            <label>Razón Social <span class="req">*</span></label>
+            <input type="text" id="loaderName" value="Mi Empresa Cargadora">
+          </div>
+          <div class="dcdt-field">
+            <label>CIF / NIF</label>
+            <input type="text" id="loaderTaxId" placeholder="B12345678">
+          </div>
+          <div class="dcdt-field">
+            <label>Dirección</label>
+            <input type="text" id="loaderAddress" placeholder="Calle, nº">
+          </div>
+          <div class="dcdt-field">
+            <label>Ciudad <span class="req">*</span></label>
+            <input type="text" id="loaderCity" value="Madrid">
+          </div>
+          <div class="dcdt-field">
+            <label>Código Postal</label>
+            <input type="text" id="loaderPostalCode" placeholder="28001">
+          </div>
+          <div class="dcdt-field">
+            <label>País (ISO-2) <span class="req">*</span></label>
+            <input type="text" id="loaderCountry" value="ES">
+          </div>
         </div>
-        <div class="form-group"><label>Matrícula Principal (*)</label><input type="text" id="plateNumber"></div>
-        <div class="form-group"><label>Matrícula Remolque</label><input type="text" id="trailerPlateNumber"></div>
-        <div class="form-group"><label>Conductor Principal (*)</label><input type="text" id="driverName"></div>
-        <div class="form-group"><label>DNI/NIE Conductor</label><input type="text" id="driverId"></div>
-        <div class="form-group"><label>Teléfono Conductor</label><input type="text" id="driverPhone"></div>
-      </div>
-    </div>
 
-    <div class="section">
-      <div class="section-title">4. Ruta (Envío Único)</div>
-      <div class="grid">
-        <div class="form-group"><label>Origen: Ciudad (*)</label><input type="text" id="originCity" value="Madrid"></div>
-        <div class="form-group"><label>Origen: País (*)</label><input type="text" id="originCountry" value="ES"></div>
-        <div class="form-group"><label>Destino: Ciudad (*)</label><input type="text" id="destinationCity" value="Barcelona"></div>
-        <div class="form-group"><label>Destino: País (*)</label><input type="text" id="destinationCountry" value="ES"></div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">5. Mercancía (Envío Único)</div>
-      <div class="grid">
-        <div class="form-group grid-full"><label>Descripción de Mercancía (*)</label><input type="text" id="cargoDesc" value="Mercancía general"></div>
-        <div class="form-group"><label>Peso</label><input type="number" id="cargoWeight" value="1000"></div>
-        <div class="form-group"><label>Unidad de Peso</label><input type="text" id="cargoWeightUnit" value="kg"></div>
-        <div class="form-group"><label>Cantidad de bultos</label><input type="number" id="cargoPackages"></div>
-        <div class="form-group"><label>Tipo de embalaje</label><input type="text" id="cargoPackageType" placeholder="Ej: Pallet"></div>
-      </div>
-    </div>
-
-    <div class="section">
-      <div class="section-title">6. Opciones Adicionales</div>
-      <div class="grid">
-        <div class="form-group">
-          <label>Notificación por Email</label>
-          <input type="text" id="notifyEmail" placeholder="correo@ejemplo.com">
+        <!-- Transportista -->
+        <div class="dcdt-subsection-title dcdt-subsection-divider">🔸 Transportista <span class="req">*</span></div>
+        <div class="dcdt-grid-4">
+          <div class="dcdt-field">
+            <label>Razón Social <span class="req">*</span></label>
+            <input type="text" id="carrierName" value="Mi Empresa de Transporte">
+          </div>
+          <div class="dcdt-field">
+            <label>CIF / NIF</label>
+            <input type="text" id="carrierTaxId" placeholder="A87654321">
+          </div>
+          <div class="dcdt-field">
+            <label>Ciudad <span class="req">*</span></label>
+            <input type="text" id="carrierCity" value="Madrid">
+          </div>
+          <div class="dcdt-field">
+            <label>País (ISO-2) <span class="req">*</span></label>
+            <input type="text" id="carrierCountry" value="ES">
+          </div>
         </div>
-        <div class="form-group">
-          <label>Referencia de Albarán</label>
-          <input type="text" id="referenceCode" placeholder="Ej: ALB-123">
+
+        <!-- Destinatario -->
+        <div class="dcdt-subsection-title dcdt-subsection-divider">🔸 Destinatario <span class="optional-tag">(Opcional)</span></div>
+        <div class="dcdt-grid-4">
+          <div class="dcdt-field">
+            <label>Razón Social</label>
+            <input type="text" id="recipientName">
+          </div>
+          <div class="dcdt-field">
+            <label>CIF / NIF</label>
+            <input type="text" id="recipientTaxId">
+          </div>
+          <div class="dcdt-field">
+            <label>Ciudad</label>
+            <input type="text" id="recipientCity">
+          </div>
+          <div class="dcdt-field">
+            <label>País (ISO-2)</label>
+            <input type="text" id="recipientCountry" value="ES">
+          </div>
         </div>
-        <div class="form-group grid-full">
-          <label class="checkbox-group">
-            <input type="checkbox" id="leaveAsDraft"> Crear solo como BORRADOR (No emite PDF público ni envía notificaciones)
-          </label>
+
+      </div>
+    </div>
+
+    <!-- ═══ 3. Vehículo y Conductores ═══ -->
+    <div class="dcdt-section">
+      <div class="dcdt-section-header">
+        <span class="icon">🚛</span> 3. Vehículo y Conductores
+      </div>
+      <div class="dcdt-section-body">
+        <div class="dcdt-grid-3">
+          <div class="dcdt-field">
+            <label>Tipo de Conjunto</label>
+            <select id="transportSetType">
+              <option value="1">1 — Rígido</option>
+              <option value="2">2 — Ligero</option>
+              <option value="3" selected>3 — Tractora + Semirremolque</option>
+              <option value="4">4 — Camión + Remolque</option>
+              <option value="5">5 — Doble Remolque</option>
+            </select>
+          </div>
+          <div class="dcdt-field">
+            <label>Matrícula Principal <span class="req">*</span></label>
+            <input type="text" id="plateNumber" placeholder="1234 ABC">
+          </div>
+          <div class="dcdt-field">
+            <label>Matrícula Remolque</label>
+            <input type="text" id="trailerPlateNumber" placeholder="R-5678-XY">
+          </div>
+          <div class="dcdt-field">
+            <label>Conductor Principal <span class="req">*</span></label>
+            <input type="text" id="driverName" placeholder="Nombre completo">
+          </div>
+          <div class="dcdt-field">
+            <label>DNI / NIE Conductor</label>
+            <input type="text" id="driverId" placeholder="12345678A">
+          </div>
+          <div class="dcdt-field">
+            <label>Teléfono Conductor</label>
+            <input type="text" id="driverPhone" placeholder="+34 600 000 000">
+          </div>
         </div>
       </div>
     </div>
 
-    <button id="generateBtn">Crear Documento DCDT</button>
-    
-    <div id="resultBox" class="result">
+    <!-- ═══ 4. Ruta ═══ -->
+    <div class="dcdt-section">
+      <div class="dcdt-section-header">
+        <span class="icon">📍</span> 4. Ruta
+      </div>
+      <div class="dcdt-section-body">
+        <div class="dcdt-route-row">
+          <!-- Origen -->
+          <div class="dcdt-route-block">
+            <div class="dcdt-route-label">🟢 Origen</div>
+            <div class="dcdt-grid">
+              <div class="dcdt-field">
+                <label>Ciudad <span class="req">*</span></label>
+                <input type="text" id="originCity" value="Madrid">
+              </div>
+              <div class="dcdt-field">
+                <label>País <span class="req">*</span></label>
+                <input type="text" id="originCountry" value="ES">
+              </div>
+            </div>
+          </div>
+          <!-- Flecha -->
+          <div class="dcdt-route-arrow">➜</div>
+          <!-- Destino -->
+          <div class="dcdt-route-block">
+            <div class="dcdt-route-label">🔴 Destino</div>
+            <div class="dcdt-grid">
+              <div class="dcdt-field">
+                <label>Ciudad <span class="req">*</span></label>
+                <input type="text" id="destinationCity" value="Barcelona">
+              </div>
+              <div class="dcdt-field">
+                <label>País <span class="req">*</span></label>
+                <input type="text" id="destinationCountry" value="ES">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 5. Mercancía ═══ -->
+    <div class="dcdt-section">
+      <div class="dcdt-section-header">
+        <span class="icon">📦</span> 5. Mercancía
+      </div>
+      <div class="dcdt-section-body">
+        <div class="dcdt-grid">
+          <div class="dcdt-field dcdt-col-full">
+            <label>Descripción <span class="req">*</span></label>
+            <input type="text" id="cargoDesc" value="Mercancía general">
+          </div>
+          <div class="dcdt-field">
+            <label>Peso</label>
+            <input type="number" id="cargoWeight" value="1000">
+          </div>
+          <div class="dcdt-field">
+            <label>Unidad de Peso</label>
+            <input type="text" id="cargoWeightUnit" value="kg">
+          </div>
+          <div class="dcdt-field">
+            <label>Cantidad de Bultos</label>
+            <input type="number" id="cargoPackages">
+          </div>
+          <div class="dcdt-field">
+            <label>Tipo de Embalaje</label>
+            <input type="text" id="cargoPackageType" placeholder="Ej: Pallet">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 6. Opciones Adicionales ═══ -->
+    <div class="dcdt-section">
+      <div class="dcdt-section-header">
+        <span class="icon">⚙️</span> 6. Opciones Adicionales
+      </div>
+      <div class="dcdt-section-body">
+        <div class="dcdt-grid">
+          <div class="dcdt-field">
+            <label>Notificación por Email</label>
+            <input type="text" id="notifyEmail" placeholder="correo@ejemplo.com">
+          </div>
+          <div class="dcdt-field">
+            <label>Referencia de Albarán</label>
+            <input type="text" id="referenceCode" placeholder="Ej: ALB-123">
+          </div>
+          <div class="dcdt-col-full">
+            <label class="dcdt-checkbox-group">
+              <input type="checkbox" id="leaveAsDraft">
+              <span>⚠️ Crear solo como BORRADOR — No emite PDF público ni envía notificaciones</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Submit Button ═══ -->
+    <button id="generateBtn" class="dcdt-submit-btn">
+      🚀 Crear Documento DCDT
+    </button>
+
+    <!-- ═══ Result Box ═══ -->
+    <div id="resultBox" class="dcdt-result">
       <h3 id="resultStatus"></h3>
-      <pre id="resultDetails" style="white-space: pre-wrap; font-size: 0.9em;"></pre>
-      <a id="resultPdf" href="#" target="_blank" style="display:none; color: #0056b3; font-weight: bold; margin-top: 10px;">📄 Abrir/Descargar PDF Público</a>
+      <pre id="resultDetails"></pre>
+      <a id="resultPdf" href="#" target="_blank" class="dcdt-pdf-link" style="display:none;">
+        📄 Abrir / Descargar PDF Público
+      </a>
     </div>
+
   </div>
 
   <script src="app.js"></script>

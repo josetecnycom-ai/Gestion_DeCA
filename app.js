@@ -1,16 +1,35 @@
 geotab.addin.dcdtGenerator = function (api, state) {
+  
+  // Lista de IDs de los campos que queremos recordar en el navegador (API Key removida por seguridad)
+  const camposParaGuardar = [
+    'loaderName', 'loaderTaxId', 'loaderAddress', 'loaderCity', 'loaderPostalCode', 'loaderCountry',
+    'carrierName', 'carrierTaxId', 'carrierCity', 'carrierCountry',
+    'recipientName', 'recipientTaxId', 'recipientCity', 'recipientCountry',
+    'notifyEmail', 'originCity', 'originCountry', 'destinationCity', 'destinationCountry',
+    'cargoDesc', 'cargoWeight', 'cargoWeightUnit', 'cargoPackageType'
+  ];
+
   return {
     initialize: function (api, state, initializeCallback) {
       document.getElementById('generateBtn').addEventListener('click', function() {
-        generateDCDT(api);
+        generateDCDT(api, camposParaGuardar);
       });
       initializeCallback();
     },
 
     focus: function (api, state) {
+      // 1. Poner fecha de hoy por defecto si está vacía
       if (!document.getElementById('transportDate').value) {
         document.getElementById('transportDate').valueAsDate = new Date();
       }
+
+      // 2. Recuperar todos los datos guardados previamente de localStorage
+      camposParaGuardar.forEach(id => {
+        const savedValue = localStorage.getItem('dcdt_addin_' + id);
+        if (savedValue !== null && savedValue !== "") {
+          document.getElementById(id).value = savedValue;
+        }
+      });
     },
 
     blur: function (api, state) {
@@ -18,13 +37,12 @@ geotab.addin.dcdtGenerator = function (api, state) {
   };
 };
 
-function generateDCDT(api) {
-  const apiKey = document.getElementById('apiKey').value.trim();
-
-  if (!apiKey) {
-    alert("Por favor, introduce tu API Key de DCDT.");
-    return;
-  }
+function generateDCDT(api, camposParaGuardar) {
+  // Guardar automáticamente los valores actuales en la memoria del navegador (localStorage)
+  camposParaGuardar.forEach(id => {
+    const currentValue = document.getElementById(id).value;
+    localStorage.setItem('dcdt_addin_' + id, currentValue);
+  });
 
   // Helper to get value or undefined if empty
   const val = (id) => {
@@ -118,24 +136,24 @@ function generateDCDT(api) {
   const resultDetails = document.getElementById('resultDetails');
   const resultPdf = document.getElementById('resultPdf');
 
-  resultStatus.innerText = "Enviando datos a Davinchi...";
+  resultStatus.innerText = "Enviando datos al Proxy Seguro...";
   resultDetails.innerText = JSON.stringify(cleanPayload, null, 2);
   resultPdf.style.display = 'none';
   resultBox.style.display = 'block';
-  resultBox.className = 'result'; // remove success/error classes
+  resultBox.className = 'dcdt-result'; // remove success/error classes
 
-  fetch('https://dcdt.davinchi.es/api/v1/documents', {
+  // IMPORTANTE: Ahora la petición viaja a tu servidor Proxy de Cloudflare
+  fetch('https://proxy-dcdt-geotab.jose-tecnycom.workers.dev', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'X-API-Key': apiKey
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify(cleanPayload)
   })
   .then(response => response.json())
   .then(data => {
     if (data.success || (data.success === false && data.documentId)) {
-       resultBox.classList.add(data.success ? 'success' : 'success'); // using green even for drafts
+       resultBox.classList.add('success');
        if (data.publicUrl || data.pdfUrl) {
          resultStatus.innerText = "¡DCDT Generado Correctamente!";
          resultDetails.innerText = "Documento DCDT ID: " + data.documentId + "\nMatrícula: " + cleanPayload.vehicle.plateNumber;
@@ -150,13 +168,13 @@ function generateDCDT(api) {
        }
     } else {
       resultBox.classList.add('error');
-      resultStatus.innerText = "Error en la validación (422/500)";
+      resultStatus.innerText = "Error en la validación de Davinchi (422/500)";
       resultDetails.innerText = JSON.stringify(data.errors || data, null, 2);
     }
   })
   .catch(error => {
     resultBox.classList.add('error');
-    resultStatus.innerText = "Error de red / CORS";
-    resultDetails.innerText = "La petición fue bloqueada por el navegador o hubo un fallo de red.\nError exacto: " + error.message;
+    resultStatus.innerText = "Error de red";
+    resultDetails.innerText = "Fallo de comunicación con el Proxy.\nError exacto: " + error.message;
   });
 }
