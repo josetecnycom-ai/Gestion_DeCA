@@ -14,6 +14,57 @@ geotab.addin.dcdtGenerator = function (api, state) {
       document.getElementById('generateBtn').addEventListener('click', function() {
         generateDCDT(api, camposParaGuardar);
       });
+
+      // Cargar vehículos y conductores desde MyGeotab
+      api.multiCall([
+        ["Get", { typeName: "Device" }],
+        ["Get", { typeName: "User", search: { isDriver: true } }]
+      ], function(results) {
+        const devices = results[0];
+        const users = results[1];
+
+        // Llenar selector de vehículos
+        const vehSelect = document.getElementById("geotabVehicleSelect");
+        vehSelect.innerHTML = '<option value="">(Selecciona Vehículo...)</option>';
+        devices.forEach(d => {
+           if(d.serialNumber !== "000-000-0000") { // Ignorar vehículos falsos/plantillas
+             const opt = document.createElement('option');
+             const plate = d.licensePlate || '';
+             opt.value = plate; // Guardamos la matrícula como valor
+             opt.text = d.name + (plate ? ' [' + plate + ']' : '');
+             vehSelect.appendChild(opt);
+           }
+        });
+        // Evento al seleccionar vehículo
+        vehSelect.addEventListener('change', function() {
+           if(this.value) document.getElementById('plateNumber').value = this.value;
+        });
+
+        // Llenar selector de conductores
+        const driverSelect = document.getElementById("geotabDriverSelect");
+        driverSelect.innerHTML = '<option value="">(Selecciona Conductor...)</option>';
+        users.forEach(u => {
+           const opt = document.createElement('option');
+           let fullName = (u.firstName || '') + ' ' + (u.lastName || '');
+           if(!fullName.trim()) fullName = u.name;
+           
+           opt.value = fullName.trim();
+           // Intentar sacar el DNI del employeeNo o del campo de licencia
+           opt.dataset.idnum = u.employeeNo || u.licenseNumber || ''; 
+           opt.text = fullName.trim();
+           driverSelect.appendChild(opt);
+        });
+        // Evento al seleccionar conductor
+        driverSelect.addEventListener('change', function() {
+           if(this.value) {
+             document.getElementById('driverName').value = this.value;
+             document.getElementById('driverId').value = this.options[this.selectedIndex].dataset.idnum;
+           }
+        });
+      }, function(e) {
+         console.error("Error cargando datos de Geotab:", e);
+      });
+
       initializeCallback();
     },
 
