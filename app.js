@@ -331,8 +331,18 @@ geotab.addin.dcdtGenerator = function (api, state) {
 };
 
 function generateDCDT(api) {
-  const val = (id) => { const v = document.getElementById(id).value.trim(); return v === "" ? undefined : v; };
-  const num = (id) => { const v = document.getElementById(id).value.trim(); return v === "" ? undefined : Number(v); };
+  const val = (id) => { 
+    const el = document.getElementById(id); 
+    if (!el) return undefined;
+    const v = el.value.trim(); 
+    return v === "" ? undefined : v; 
+  };
+  const num = (id) => { 
+    const el = document.getElementById(id); 
+    if (!el) return undefined;
+    const v = el.value.trim(); 
+    return v === "" ? undefined : Number(v); 
+  };
 
   // Helper para construir objetos Party
   const buildParty = (type) => {
