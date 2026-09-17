@@ -3,284 +3,366 @@
 <head>
   <meta charset="utf-8">
   <title>Generador DCDT</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-muted: #64748b;
+    }
+    body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 16px; color: var(--text); background: var(--bg); }
+    .header-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 3px solid var(--primary); }
+    
+    .section { background: #fff; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
+    .section-header { padding: 12px 16px; background: #f1f5f9; font-weight: 600; border-bottom: 1px solid var(--border); font-size: 1.05em; display: flex; align-items: center; gap: 8px; }
+    .section-content { padding: 16px; }
+    
+    .row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
+    .col { flex: 1; min-width: 250px; }
+    .col-half { flex: 0 0 calc(50% - 8px); }
+    
+    .form-group { display: flex; flex-direction: column; margin-bottom: 12px; }
+    label { font-size: 0.85em; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
+    input[type="text"], input[type="date"], input[type="number"], select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95em; width: 100%; box-sizing: border-box; }
+    input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    
+    .search-group { position: relative; display: flex; gap: 8px; }
+    .search-group input { flex: 1; }
+    
+    .btn { padding: 8px 12px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85em; transition: background 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-outline:hover { background: #f1f5f9; }
+    .btn-large { padding: 14px 24px; font-size: 1.1em; width: 100%; margin-top: 10px; }
+
+    /* Modals */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: #fff; width: 90%; max-width: 600px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); display: flex; flex-direction: column; max-height: 90vh; }
+    .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-size: 1.2em; font-weight: 700; display: flex; justify-content: space-between; }
+    .modal-body { padding: 20px; overflow-y: auto; }
+    .modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: #f8fafc; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
+    .close-btn { cursor: pointer; color: var(--text-muted); font-size: 1.5em; line-height: 1; }
+    
+    .req { color: #ef4444; }
+    
+    .dcdt-result { margin-top: 16px; padding: 16px; border-radius: 8px; display: none; }
+    .dcdt-result.success { background: #dcfce7; border: 1px solid #bbf7d0; color: #166534; }
+    .dcdt-result.error { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; }
+  </style>
 </head>
 <body>
 
-  <div id="dcdt-addin-container" style="font-family:'Segoe UI',Arial,sans-serif; max-width:960px; margin:0 auto; padding:16px 20px; color:#1e293b;">
+  <div class="header-bar">
+    <span style="font-size:1.8em;">📄</span>
+    <h2 style="margin:0; color:#1e3a5f;">Nuevo DeCA (DCDT)</h2>
+  </div>
 
-    <!-- ═══ Header ═══ -->
-    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px; padding-bottom:12px; border-bottom:3px solid #2563eb;">
-      <span style="font-size:1.5em;">📋</span>
-      <span style="font-size:1.5em; font-weight:700; color:#1e3a5f; margin:0;">Generador DCDT</span>
-      <span style="display:inline-block; padding:3px 10px; background:#2563eb; color:#fff; border-radius:12px; font-size:0.7em; font-weight:600;">Davinchi</span>
-    </div>
-
-    <!-- ═══ 1. Fechas ═══ -->
-    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:16px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-      <div style="display:flex; align-items:center; gap:8px; padding:10px 16px; background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%); color:#ffffff; font-size:0.95em; font-weight:600;">
-        <span>📅</span> <span>1. Fechas</span>
-      </div>
-      <div style="padding:16px;">
-        <table style="width:100%; border-collapse:separate; border-spacing:12px 8px;"><tr>
-          <td style="width:50%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">Fecha de Transporte <span style="color:#ef4444;">*</span></div>
-            <input type="date" id="transportDate" required style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="width:50%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">Fecha de Carga <span style="color:#94a3b8; font-size:0.85em; font-weight:400;">(Opcional)</span></div>
-            <input type="date" id="loadingDate" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-        </tr></table>
+  <div id="mainForm">
+    <!-- 1. Cabecera -->
+    <div class="section">
+      <div class="section-header">📅 Cabecera</div>
+      <div class="section-content row">
+        <div class="form-group col-half">
+          <label>Fecha transporte <span class="req">*</span></label>
+          <input type="date" id="transportDate" required>
+        </div>
+        <div class="form-group col-half">
+          <label>Fecha carga (Opcional)</label>
+          <input type="date" id="loadingDate">
+        </div>
       </div>
     </div>
 
-    <!-- ═══ 2. Partes Implicadas ═══ -->
-    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:16px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-      <div style="display:flex; align-items:center; gap:8px; padding:10px 16px; background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%); color:#ffffff; font-size:0.95em; font-weight:600;">
-        <span>🏢</span> <span>2. Partes Implicadas</span>
+    <!-- 2. Partes -->
+    <div class="section">
+      <div class="section-header">🏢 Partes Implicadas</div>
+      <div class="section-content row">
+        <div class="form-group col">
+          <label>Cargador <span class="req">*</span></label>
+          <div class="search-group">
+            <input type="text" id="loaderSearch" list="list-loaders" placeholder="Buscar por nombre o NIF..." autocomplete="off">
+            <datalist id="list-loaders"></datalist>
+            <button class="btn btn-outline" onclick="openPartyModal('loader', true)" title="Nuevo Cargador">➕</button>
+            <button class="btn btn-outline" onclick="openPartyModal('loader', false)" title="Editar Cargador">✏️</button>
+          </div>
+          <!-- Hidden inputs para el payload -->
+          <input type="hidden" id="loader_name"><input type="hidden" id="loader_taxId"><input type="hidden" id="loader_address">
+          <input type="hidden" id="loader_city"><input type="hidden" id="loader_province"><input type="hidden" id="loader_postalCode"><input type="hidden" id="loader_country">
+        </div>
+        <div class="form-group col">
+          <label>Transportista <span class="req">*</span></label>
+          <div class="search-group">
+            <input type="text" id="carrierSearch" list="list-carriers" placeholder="Buscar por nombre o NIF..." autocomplete="off">
+            <datalist id="list-carriers"></datalist>
+            <button class="btn btn-outline" onclick="openPartyModal('carrier', true)" title="Nuevo Transportista">➕</button>
+            <button class="btn btn-outline" onclick="openPartyModal('carrier', false)" title="Editar Transportista">✏️</button>
+          </div>
+          <input type="hidden" id="carrier_name"><input type="hidden" id="carrier_taxId"><input type="hidden" id="carrier_address">
+          <input type="hidden" id="carrier_city"><input type="hidden" id="carrier_province"><input type="hidden" id="carrier_postalCode"><input type="hidden" id="carrier_country">
+        </div>
       </div>
-      <div style="padding:16px;">
-
-        <!-- Cargador -->
-        <div style="font-size:0.9em; font-weight:700; color:#2563eb; margin:0 0 10px 0; padding:0 0 6px 0; border-bottom:2px solid #e2e8f0;">🔸 Cargador / Expedidor <span style="color:#ef4444;">*</span></div>
-        <table style="width:100%; border-collapse:separate; border-spacing:10px 8px;"><tr>
-          <td style="width:33%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Razón Social <span style="color:#ef4444;">*</span></div>
-            <input type="text" id="loaderName" value="Mi Empresa Cargadora" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="width:33%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">CIF / NIF</div>
-            <input type="text" id="loaderTaxId" placeholder="B12345678" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="width:33%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Dirección</div>
-            <input type="text" id="loaderAddress" placeholder="Calle, nº" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-        </tr><tr>
-          <td style="vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Ciudad <span style="color:#ef4444;">*</span></div>
-            <input type="text" id="loaderCity" value="Madrid" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Código Postal</div>
-            <input type="text" id="loaderPostalCode" placeholder="28001" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">País (ISO-2) <span style="color:#ef4444;">*</span></div>
-            <input type="text" id="loaderCountry" value="ES" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-        </tr></table>
-
-        <!-- Transportista -->
-        <div style="font-size:0.9em; font-weight:700; color:#2563eb; margin:18px 0 10px 0; padding:0 0 6px 0; border-bottom:2px solid #e2e8f0;">🔸 Transportista <span style="color:#ef4444;">*</span></div>
-        <table style="width:100%; border-collapse:separate; border-spacing:10px 8px;"><tr>
-          <td style="width:25%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Razón Social <span style="color:#ef4444;">*</span></div>
-            <input type="text" id="carrierName" value="Mi Empresa de Transporte" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="width:25%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">CIF / NIF</div>
-            <input type="text" id="carrierTaxId" placeholder="A87654321" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="width:25%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Ciudad <span style="color:#ef4444;">*</span></div>
-            <input type="text" id="carrierCity" value="Madrid" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="width:25%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">País (ISO-2) <span style="color:#ef4444;">*</span></div>
-            <input type="text" id="carrierCountry" value="ES" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-        </tr></table>
-
-        <!-- Destinatario -->
-        <div style="font-size:0.9em; font-weight:700; color:#2563eb; margin:18px 0 10px 0; padding:0 0 6px 0; border-bottom:2px solid #e2e8f0;">🔸 Destinatario <span style="color:#94a3b8; font-weight:400; font-size:0.85em;">(Opcional)</span></div>
-        <table style="width:100%; border-collapse:separate; border-spacing:10px 8px;"><tr>
-          <td style="width:25%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Razón Social</div>
-            <input type="text" id="recipientName" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="width:25%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">CIF / NIF</div>
-            <input type="text" id="recipientTaxId" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="width:25%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Ciudad</div>
-            <input type="text" id="recipientCity" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="width:25%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">País (ISO-2)</div>
-            <input type="text" id="recipientCountry" value="ES" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-        </tr></table>
-
+      <div class="section-content row" style="padding-top:0;">
+        <div class="form-group col">
+          <label>Destinatario (Opcional)</label>
+          <div class="search-group">
+            <input type="text" id="recipientSearch" list="list-recipients" placeholder="Buscar por nombre o NIF..." autocomplete="off">
+            <datalist id="list-recipients"></datalist>
+            <button class="btn btn-outline" onclick="openPartyModal('recipient', true)" title="Nuevo Destinatario">➕</button>
+            <button class="btn btn-outline" onclick="openPartyModal('recipient', false)" title="Editar Destinatario">✏️</button>
+          </div>
+          <input type="hidden" id="recipient_name"><input type="hidden" id="recipient_taxId"><input type="hidden" id="recipient_address">
+          <input type="hidden" id="recipient_city"><input type="hidden" id="recipient_province"><input type="hidden" id="recipient_postalCode"><input type="hidden" id="recipient_country">
+        </div>
+        <div class="form-group col">
+           <!-- Placeholder for spacing -->
+        </div>
       </div>
-    </div>
-
-    <!-- ═══ 3. Vehículo y Conductores ═══ -->
-    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:16px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-      <div style="display:flex; align-items:center; gap:8px; padding:10px 16px; background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%); color:#ffffff; font-size:0.95em; font-weight:600;">
-        <span>🚛</span> <span>3. Vehículo y Conductores</span>
-      </div>
-      <div style="padding:16px;">
-        <div style="display:flex; gap:10px; margin-bottom: 15px; padding: 10px; background: #e2e8f0; border-radius: 6px;">
-          <div style="flex:1;">
-            <label style="font-size:0.8em; font-weight:bold; color:#1e3a5f;">Autocompletar Vehículo desde Geotab:</label>
-            <select id="geotabVehicleSelect" style="width:100%; padding:6px; border-radius:4px; border:1px solid #cbd5e1;">
-              <option value="">Cargando vehículos...</option>
+      
+      <!-- Vehículo y Conductores -->
+      <div class="section-content" style="border-top: 1px solid var(--border); background: #f8fafc;">
+        <h4 style="margin-top:0; color:var(--primary);">Conjunto de Transporte</h4>
+        <div class="row">
+          <div class="form-group col">
+            <label>Tipo de Conjunto</label>
+            <select id="transportSetType">
+              <option value="1">1 - Rígido</option>
+              <option value="2">2 - Ligero</option>
+              <option value="3" selected>3 - Tractora + Semirremolque</option>
+              <option value="4">4 - Camión + Remolque</option>
+              <option value="5">5 - Doble Remolque</option>
             </select>
           </div>
-          <div style="flex:1;">
-            <label style="font-size:0.8em; font-weight:bold; color:#1e3a5f;">Autocompletar Conductor desde Geotab:</label>
-            <select id="geotabDriverSelect" style="width:100%; padding:6px; border-radius:4px; border:1px solid #cbd5e1;">
-              <option value="">Cargando conductores...</option>
-            </select>
+          <div class="form-group col">
+            <label>Matrícula Principal <span class="req">*</span></label>
+            <input type="text" id="plateNumber" list="list-vehicles" placeholder="Buscar vehículo en Geotab..." autocomplete="off">
+            <datalist id="list-vehicles"></datalist>
+          </div>
+          <div class="form-group col">
+            <label>Matrícula Remolque</label>
+            <input type="text" id="trailerPlateNumber" list="list-vehicles" placeholder="Opcional..." autocomplete="off">
           </div>
         </div>
-
-        <table style="width:100%; border-collapse:separate; border-spacing:10px 8px;"><tr>
-          <td style="width:33%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Tipo de Conjunto</div>
-            <select id="transportSetType" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-              <option value="1">1 — Rígido</option>
-              <option value="2">2 — Ligero</option>
-              <option value="3" selected>3 — Tractora + Semirremolque</option>
-              <option value="4">4 — Camión + Remolque</option>
-              <option value="5">5 — Doble Remolque</option>
-            </select>
-          </td>
-          <td style="width:33%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Matrícula Principal <span style="color:#ef4444;">*</span></div>
-            <input type="text" id="plateNumber" placeholder="1234 ABC" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="width:33%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Matrícula Remolque</div>
-            <input type="text" id="trailerPlateNumber" placeholder="R-5678-XY" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-        </tr><tr>
-          <td style="vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Conductor Principal <span style="color:#ef4444;">*</span></div>
-            <input type="text" id="driverName" placeholder="Nombre completo" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">DNI / NIE Conductor</div>
-            <input type="text" id="driverId" placeholder="12345678A" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Teléfono Conductor</div>
-            <input type="text" id="driverPhone" placeholder="+34 600 000 000" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-        </tr></table>
+        <div class="row">
+          <div class="form-group col">
+            <label>Conductor 1 <span class="req">*</span></label>
+            <input type="text" id="driver1Name" list="list-drivers" placeholder="Buscar conductor en Geotab..." autocomplete="off">
+            <datalist id="list-drivers"></datalist>
+          </div>
+          <div class="form-group col-half">
+            <label>DNI/NIE</label>
+            <input type="text" id="driver1Id" placeholder="Ej: 12345678A">
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group col">
+            <label>Conductor 2 (Opcional)</label>
+            <input type="text" id="driver2Name" list="list-drivers" placeholder="Buscar conductor..." autocomplete="off">
+          </div>
+          <div class="form-group col-half">
+            <label>DNI/NIE (2)</label>
+            <input type="text" id="driver2Id">
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- ═══ 4. Ruta ═══ -->
-    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:16px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-      <div style="display:flex; align-items:center; gap:8px; padding:10px 16px; background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%); color:#ffffff; font-size:0.95em; font-weight:600;">
-        <span>📍</span> <span>4. Ruta</span>
-      </div>
-      <div style="padding:16px;">
-        <table style="width:100%; border-collapse:separate; border-spacing:10px 8px;"><tr>
-          <td style="width:22%; vertical-align:top;">
-            <div style="font-size:0.82em; font-weight:700; color:#16a34a; margin-bottom:6px;">🟢 ORIGEN</div>
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Ciudad <span style="color:#ef4444;">*</span></div>
-            <input type="text" id="originCity" value="Madrid" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="width:14%; vertical-align:top;">
-            <div style="font-size:0.82em; color:transparent; margin-bottom:6px;">.</div>
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">País <span style="color:#ef4444;">*</span></div>
-            <input type="text" id="originCountry" value="ES" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="width:8%; vertical-align:middle; text-align:center;">
-            <div style="font-size:2em; color:#2563eb; padding-top:16px;">➜</div>
-          </td>
-          <td style="width:22%; vertical-align:top;">
-            <div style="font-size:0.82em; font-weight:700; color:#dc2626; margin-bottom:6px;">🔴 DESTINO</div>
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Ciudad <span style="color:#ef4444;">*</span></div>
-            <input type="text" id="destinationCity" value="Barcelona" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="width:14%; vertical-align:top;">
-            <div style="font-size:0.82em; color:transparent; margin-bottom:6px;">.</div>
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">País <span style="color:#ef4444;">*</span></div>
-            <input type="text" id="destinationCountry" value="ES" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-        </tr></table>
-      </div>
-    </div>
-
-    <!-- ═══ 5. Mercancía ═══ -->
-    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:16px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-      <div style="display:flex; align-items:center; gap:8px; padding:10px 16px; background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%); color:#ffffff; font-size:0.95em; font-weight:600;">
-        <span>📦</span> <span>5. Mercancía</span>
-      </div>
-      <div style="padding:16px;">
-        <table style="width:100%; border-collapse:separate; border-spacing:10px 8px;">
-        <tr>
-          <td colspan="4" style="vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Descripción <span style="color:#ef4444;">*</span></div>
-            <input type="text" id="cargoDesc" value="Mercancía general" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-        </tr>
-        <tr>
-          <td style="width:25%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Peso</div>
-            <input type="number" id="cargoWeight" value="1000" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="width:25%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Unidad de Peso</div>
-            <input type="text" id="cargoWeightUnit" value="kg" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="width:25%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Cantidad de Bultos</div>
-            <input type="number" id="cargoPackages" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="width:25%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Tipo de Embalaje</div>
-            <input type="text" id="cargoPackageType" placeholder="Ej: Pallet" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-        </tr></table>
-      </div>
-    </div>
-
-    <!-- ═══ 6. Opciones Adicionales ═══ -->
-    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:16px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.06);">
-      <div style="display:flex; align-items:center; gap:8px; padding:10px 16px; background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 100%); color:#ffffff; font-size:0.95em; font-weight:600;">
-        <span>⚙️</span> <span>6. Opciones Adicionales</span>
-      </div>
-      <div style="padding:16px;">
-        <table style="width:100%; border-collapse:separate; border-spacing:10px 8px;"><tr>
-          <td style="width:50%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Notificación por Email</div>
-            <input type="text" id="notifyEmail" placeholder="correo@ejemplo.com" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-          <td style="width:50%; vertical-align:top;">
-            <div style="font-size:0.78em; font-weight:600; color:#64748b; text-transform:uppercase; margin-bottom:4px;">Referencia de Albarán</div>
-            <input type="text" id="referenceCode" placeholder="Ej: ALB-123" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.9em; color:#1e293b; background:#f8fafc; box-sizing:border-box;">
-          </td>
-        </tr><tr>
-          <td colspan="2">
-            <div style="display:flex; align-items:center; gap:8px; padding:10px 12px; background:#fef3c7; border:1px solid #fcd34d; border-radius:6px; margin-top:4px;">
-              <input type="checkbox" id="leaveAsDraft" style="width:16px; height:16px; cursor:pointer;">
-              <span style="font-size:0.85em; font-weight:500; color:#92400e;">⚠️ Crear solo como BORRADOR — No emite PDF público ni envía notificaciones</span>
+    <!-- 3. Origen y Destino -->
+    <div class="row" style="margin-bottom:0;">
+      <div class="col section">
+        <div class="section-header">🟢 Origen</div>
+        <div class="section-content">
+          <div class="form-group">
+            <label>Dirección Origen <span class="req">*</span></label>
+            <div class="search-group">
+              <input type="text" id="originSearch" list="list-locations" placeholder="Zonas de Geotab o guardadas..." autocomplete="off">
+              <datalist id="list-locations"></datalist>
+              <button class="btn btn-outline" onclick="openLocationModal('origin', true)" title="Nueva Dirección">➕</button>
+              <button class="btn btn-outline" onclick="openLocationModal('origin', false)" title="Editar Dirección">✏️</button>
             </div>
-          </td>
-        </tr></table>
+          </div>
+          <input type="hidden" id="origin_name"><input type="hidden" id="origin_address">
+          <input type="hidden" id="origin_city"><input type="hidden" id="origin_province"><input type="hidden" id="origin_postalCode"><input type="hidden" id="origin_country">
+        </div>
+      </div>
+      <div class="col section">
+        <div class="section-header">🔴 Destino</div>
+        <div class="section-content">
+          <div class="form-group">
+            <label>Dirección Destino <span class="req">*</span></label>
+            <div class="search-group">
+              <input type="text" id="destinationSearch" list="list-locations" placeholder="Zonas de Geotab o guardadas..." autocomplete="off">
+              <button class="btn btn-outline" onclick="openLocationModal('destination', true)" title="Nueva Dirección">➕</button>
+              <button class="btn btn-outline" onclick="openLocationModal('destination', false)" title="Editar Dirección">✏️</button>
+            </div>
+          </div>
+          <input type="hidden" id="destination_name"><input type="hidden" id="destination_address">
+          <input type="hidden" id="destination_city"><input type="hidden" id="destination_province"><input type="hidden" id="destination_postalCode"><input type="hidden" id="destination_country">
+        </div>
       </div>
     </div>
 
-    <!-- ═══ Submit Button ═══ -->
-    <button id="generateBtn" style="display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:14px 24px; margin-top:8px; background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%); color:#ffffff; font-size:1.05em; font-weight:700; border:none; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(37,99,235,0.3);">
-      🚀 Crear Documento DCDT
-    </button>
-
-    <!-- ═══ Result Box ═══ -->
-    <div id="resultBox" class="dcdt-result" style="margin-top:16px; padding:16px; border-radius:8px; border:1px solid #e2e8f0; background:#f1f5f9; display:none;">
-      <h3 id="resultStatus" style="margin:0 0 8px 0; font-size:1em;"></h3>
-      <pre id="resultDetails" style="margin:0; white-space:pre-wrap; word-break:break-word; font-size:0.85em; background:rgba(0,0,0,0.03); padding:10px; border-radius:4px;"></pre>
-      <a id="resultPdf" href="#" target="_blank" style="display:none; margin-top:10px; padding:8px 16px; background:#2563eb; color:#fff; text-decoration:none; border-radius:6px; font-weight:600; font-size:0.9em;">
-        📄 Abrir / Descargar PDF Público
-      </a>
+    <!-- 4. Mercancía -->
+    <div class="section">
+      <div class="section-header">📦 Mercancía</div>
+      <div class="section-content row">
+        <div class="form-group" style="flex: 2;">
+          <label>Descripción <span class="req">*</span></label>
+          <input type="text" id="cargoDesc" placeholder="Ej.: 24 palés de bebidas PET">
+        </div>
+        <div class="form-group col">
+          <label>Cantidad / Peso <span class="req">*</span></label>
+          <input type="number" id="cargoWeight" placeholder="Ej: 1500">
+        </div>
+        <div class="form-group col">
+          <label>Unidad</label>
+          <select id="cargoWeightUnit">
+            <option value="kg">kg</option>
+            <option value="t">t</option>
+            <option value="m3">m³</option>
+            <option value="l">L</option>
+          </select>
+        </div>
+        <div class="form-group col">
+          <label>Bultos</label>
+          <input type="number" id="cargoPackages" placeholder="Ej: 24">
+        </div>
+      </div>
+      <div class="section-content" style="padding-top:0;">
+        <div class="form-group">
+          <label>Observaciones (Opcional)</label>
+          <input type="text" id="cargoNotes" placeholder="Muelle 3, cita previa...">
+        </div>
+      </div>
     </div>
 
+    <!-- 5. Opciones Adicionales -->
+    <div class="section">
+      <div class="section-content row" style="align-items: center;">
+        <div class="form-group col">
+          <label>Notificar por Email</label>
+          <input type="text" id="notifyEmail" placeholder="correo@ejemplo.com">
+        </div>
+        <div class="form-group col">
+          <label>Referencia de Albarán</label>
+          <input type="text" id="referenceCode" placeholder="Ej: ALB-123">
+        </div>
+        <div class="form-group col" style="margin-top:10px;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; text-transform:none; color: #b45309; font-weight: 600;">
+            <input type="checkbox" id="leaveAsDraft" style="width:auto; transform:scale(1.2);">
+            Solo Guardar Borrador (No Emitir)
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <button id="generateBtn" class="btn btn-primary btn-large">Emitir DCDT</button>
+    
+    <!-- Resultado -->
+    <div id="resultBox" class="dcdt-result">
+      <h3 id="resultStatus" style="margin:0 0 8px 0;"></h3>
+      <pre id="resultDetails" style="margin:0; white-space:pre-wrap; font-size:0.85em; background:rgba(255,255,255,0.5); padding:10px; border-radius:4px;"></pre>
+      <a id="resultPdf" href="#" target="_blank" style="display:none; margin-top:10px; padding:10px 20px; background:var(--primary); color:#fff; text-decoration:none; border-radius:6px; font-weight:bold; display:inline-block;">📄 Abrir PDF</a>
+    </div>
+
+  </div> <!-- End mainForm -->
+
+  <!-- Modal para Partes (Cargador, Transportista, Destinatario) -->
+  <div id="partyModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <span id="partyModalTitle">Nueva Entidad</span>
+        <span class="close-btn" onclick="closeModal('partyModal')">&times;</span>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="modalPartyType"> <!-- 'loader', 'carrier', 'recipient' -->
+        <input type="hidden" id="modalPartyOldName"> <!-- Para saber si estamos editando -->
+        
+        <div class="row">
+          <div class="form-group col" style="flex:2;">
+            <label>Razón Social <span class="req">*</span></label>
+            <input type="text" id="modalPartyName">
+          </div>
+          <div class="form-group col">
+            <label>NIF/CIF</label>
+            <input type="text" id="modalPartyTaxId">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Calle y Nº</label>
+          <input type="text" id="modalPartyAddress">
+        </div>
+        <div class="row">
+          <div class="form-group col">
+            <label>Localidad <span class="req">*</span></label>
+            <input type="text" id="modalPartyCity">
+          </div>
+          <div class="form-group col">
+            <label>Provincia</label>
+            <input type="text" id="modalPartyProvince">
+          </div>
+          <div class="form-group col" style="max-width:100px;">
+            <label>CP</label>
+            <input type="text" id="modalPartyCP">
+          </div>
+          <div class="form-group col" style="max-width:100px;">
+            <label>País</label>
+            <input type="text" id="modalPartyCountry" value="ES">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('partyModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="savePartyModal()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Direcciones (Origen, Destino) -->
+  <div id="locationModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <span id="locationModalTitle">Nueva Dirección</span>
+        <span class="close-btn" onclick="closeModal('locationModal')">&times;</span>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="modalLocationType">
+        <input type="hidden" id="modalLocationOldName">
+        
+        <div class="form-group">
+          <label>Nombre de la Dirección (Alias) <span class="req">*</span></label>
+          <input type="text" id="modalLocationName" placeholder="Ej: Nave Central Madrid">
+        </div>
+        <div class="form-group">
+          <label>Calle y Nº</label>
+          <input type="text" id="modalLocationAddress">
+        </div>
+        <div class="row">
+          <div class="form-group col">
+            <label>Localidad <span class="req">*</span></label>
+            <input type="text" id="modalLocationCity">
+          </div>
+          <div class="form-group col">
+            <label>Provincia</label>
+            <input type="text" id="modalLocationProvince">
+          </div>
+          <div class="form-group col" style="max-width:100px;">
+            <label>CP</label>
+            <input type="text" id="modalLocationCP">
+          </div>
+          <div class="form-group col" style="max-width:100px;">
+            <label>País</label>
+            <input type="text" id="modalLocationCountry" value="ES">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('locationModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveLocationModal()">Guardar</button>
+      </div>
+    </div>
   </div>
 
   <script src="app.js"></script>
