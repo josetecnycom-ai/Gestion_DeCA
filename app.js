@@ -400,7 +400,11 @@ function generateDCDT(api) {
   if (val('driver2Name')) payload.secondDriver = { fullName: val('driver2Name'), idNumber: val('driver2Id') };
   if (val('loadingDate')) payload.transport.loadingDate = val('loadingDate');
   
-  if (val('notifyEmail')) payload.notifications = [{ channel: "email", recipient: val('notifyEmail') }];
+  if (val('notifyEmail')) {
+    payload.notifications = [{ channel: "email", recipient: val('notifyEmail') }];
+    payload.sendEmailNotifications = true;
+  }
+  
   if (val('referenceCode')) payload.references = { reference: val('referenceCode') };
 
   const cleanPayload = JSON.parse(JSON.stringify(payload));
