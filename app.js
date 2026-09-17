@@ -208,6 +208,52 @@ function fillHiddenLocationFields(type, searchName) {
 geotab.addin.dcdtGenerator = function (api, state) {
   return {
     initialize: function (api, state, initializeCallback) {
+      // Inyectar CSS dinámicamente para evitar que Geotab borre los estilos
+      const css = `
+        :root { --primary: #2563eb; --primary-hover: #1d4ed8; --bg: #f8fafc; --border: #e2e8f0; --text: #1e293b; --text-muted: #64748b; }
+        #dcdt-addin-container { font-family: 'Segoe UI', Arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 16px; color: var(--text); background: var(--bg); }
+        #dcdt-addin-container .header-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 3px solid var(--primary); }
+        #dcdt-addin-container .section { background: #fff; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
+        #dcdt-addin-container .section-header { padding: 12px 16px; background: #f1f5f9; font-weight: 600; border-bottom: 1px solid var(--border); font-size: 1.05em; display: flex; align-items: center; gap: 8px; }
+        #dcdt-addin-container .section-content { padding: 16px; }
+        #dcdt-addin-container .row { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; }
+        #dcdt-addin-container .col { flex: 1; min-width: 250px; }
+        #dcdt-addin-container .col-half { flex: 0 0 calc(50% - 8px); }
+        #dcdt-addin-container .form-group { display: flex; flex-direction: column; margin-bottom: 12px; }
+        #dcdt-addin-container label { font-size: 0.85em; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
+        #dcdt-addin-container input[type="text"], #dcdt-addin-container input[type="date"], #dcdt-addin-container input[type="number"], #dcdt-addin-container select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95em; width: 100%; box-sizing: border-box; }
+        #dcdt-addin-container input:focus, #dcdt-addin-container select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        #dcdt-addin-container .search-group { position: relative; display: flex; gap: 8px; }
+        #dcdt-addin-container .search-group input { flex: 1; }
+        #dcdt-addin-container .btn { padding: 8px 12px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.85em; transition: background 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+        #dcdt-addin-container .btn-primary { background: var(--primary); color: white; }
+        #dcdt-addin-container .btn-primary:hover { background: var(--primary-hover); }
+        #dcdt-addin-container .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        #dcdt-addin-container .btn-outline:hover { background: #f1f5f9; }
+        #dcdt-addin-container .btn-large { padding: 14px 24px; font-size: 1.1em; width: 100%; margin-top: 10px; }
+        
+        /* Modals */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 99999; }
+        .modal { background: #fff; width: 90%; max-width: 600px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); display: flex; flex-direction: column; max-height: 90vh; }
+        .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border); font-size: 1.2em; font-weight: 700; display: flex; justify-content: space-between; }
+        .modal-body { padding: 20px; overflow-y: auto; }
+        .modal-body .row { display: flex; gap: 16px; margin-bottom: 12px; }
+        .modal-body .col { flex: 1; }
+        .modal-body .form-group { display: flex; flex-direction: column; margin-bottom: 12px; }
+        .modal-body label { font-size: 0.85em; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
+        .modal-body input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.95em; width: 100%; box-sizing: border-box; }
+        .modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 12px; background: #f8fafc; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
+        .close-btn { cursor: pointer; color: var(--text-muted); font-size: 1.5em; line-height: 1; }
+        
+        #dcdt-addin-container .req { color: #ef4444; }
+        #dcdt-addin-container .dcdt-result { margin-top: 16px; padding: 16px; border-radius: 8px; display: none; }
+        #dcdt-addin-container .dcdt-result.success { background: #dcfce7; border: 1px solid #bbf7d0; color: #166534; }
+        #dcdt-addin-container .dcdt-result.error { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; }
+      `;
+      const styleNode = document.createElement('style');
+      styleNode.innerHTML = css;
+      document.head.appendChild(styleNode);
+
       loadSavedData();
 
       document.getElementById('generateBtn').addEventListener('click', function() {
@@ -238,7 +284,8 @@ geotab.addin.dcdtGenerator = function (api, state) {
         users.forEach(u => {
           let fullName = (u.firstName || '') + ' ' + (u.lastName || '');
           if(!fullName.trim()) fullName = u.name;
-          const idnum = u.employeeNo || u.licenseNumber || '';
+          // El DNI se guarda en "Número de licencia de conducir" en Geotab (licenseNumber)
+          const idnum = u.licenseNumber || '';
           driverHtml += `<option value="${fullName.trim()}" data-idnum="${idnum}">${idnum ? 'DNI/NIE: '+idnum : ''}</option>`;
         });
         document.getElementById('list-drivers').innerHTML = driverHtml;
