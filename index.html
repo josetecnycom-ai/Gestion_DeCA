@@ -56,9 +56,50 @@
 <body>
   <div id="dcdt-addin-container">
 
-  <div class="header-bar">
-    <span style="font-size:1.8em;">📄</span>
-    <h2 style="margin:0; color:#1e3a5f;">Nuevo DeCA (DCDT)</h2>
+  <div class="header-bar" style="justify-content: space-between;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font-size:1.8em;">📄</span>
+      <h2 style="margin:0; color:#1e3a5f;">DeCA (DCDT)</h2>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn btn-primary" id="tabNew">Nuevo Documento</button>
+      <button class="btn btn-outline" id="tabHistory">Historial</button>
+    </div>
+  </div>
+
+  <div id="historyView" style="display:none;">
+    <div class="section">
+      <div class="section-header">🔍 Buscar en el Historial</div>
+      <div class="section-content row">
+        <div class="form-group col">
+          <label>Fecha Desde</label><input type="date" id="searchDateFrom">
+        </div>
+        <div class="form-group col">
+          <label>Fecha Hasta</label><input type="date" id="searchDateTo">
+        </div>
+        <div class="form-group col">
+          <label>Buscador (Matrícula, Conductor, Ref...)</label><input type="text" id="searchText" placeholder="Escribe para filtrar...">
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-content" style="padding: 0;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+          <thead>
+            <tr style="background: #f1f5f9; border-bottom: 1px solid var(--border);">
+              <th style="padding: 12px; font-size: 0.85em; color: var(--text-muted); text-transform: uppercase;">Fecha</th>
+              <th style="padding: 12px; font-size: 0.85em; color: var(--text-muted); text-transform: uppercase;">Doc ID / Ref</th>
+              <th style="padding: 12px; font-size: 0.85em; color: var(--text-muted); text-transform: uppercase;">Vehículo</th>
+              <th style="padding: 12px; font-size: 0.85em; color: var(--text-muted); text-transform: uppercase;">Conductor</th>
+              <th style="padding: 12px; font-size: 0.85em; color: var(--text-muted); text-transform: uppercase;">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody">
+            <tr><td colspan="5" style="padding:20px; text-align:center;">Cargando historial...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <div id="mainForm">
