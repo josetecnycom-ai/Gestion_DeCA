@@ -70,15 +70,19 @@
   <div id="historyView" style="display:none;">
     <div class="section">
       <div class="section-header">🔍 Buscar en el Historial</div>
-      <div class="section-content row">
+      <div class="section-content row" style="align-items: flex-end;">
         <div class="form-group col">
           <label>Fecha Desde</label><input type="date" id="searchDateFrom">
         </div>
         <div class="form-group col">
           <label>Fecha Hasta</label><input type="date" id="searchDateTo">
         </div>
-        <div class="form-group col">
-          <label>Buscador (Matrícula, Conductor, Ref...)</label><input type="text" id="searchText" placeholder="Escribe para filtrar...">
+        <div class="form-group col" style="flex:2;">
+          <label>Buscador (Matrícula, Conductor, Ref...)</label>
+          <div class="search-group">
+            <input type="text" id="searchText" placeholder="Escribe para filtrar...">
+            <button class="btn btn-primary" id="btnSearchHistory">Buscar</button>
+          </div>
         </div>
       </div>
     </div>

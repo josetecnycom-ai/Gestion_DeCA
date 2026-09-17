@@ -324,17 +324,16 @@ geotab.addin.dcdtGenerator = function (api, state) {
         document.getElementById('historyView').style.display = 'none';
         document.getElementById('tabNew').className = 'btn btn-primary';
         document.getElementById('tabHistory').className = 'btn btn-outline';
+        clearForm();
       });
       document.getElementById('tabHistory').addEventListener('click', () => {
         document.getElementById('mainForm').style.display = 'none';
         document.getElementById('historyView').style.display = 'block';
         document.getElementById('tabHistory').className = 'btn btn-primary';
         document.getElementById('tabNew').className = 'btn btn-outline';
-        loadHistory(api);
+        loadHistory();
       });
-      ['searchDateFrom', 'searchDateTo', 'searchText'].forEach(id => {
-        document.getElementById(id).addEventListener('input', renderHistory);
-      });
+      document.getElementById('btnSearchHistory').addEventListener('click', renderHistory);
 
       initializeCallback();
     },
@@ -348,22 +347,83 @@ geotab.addin.dcdtGenerator = function (api, state) {
   };
 };
 
-// Historial en memoria
-let fullHistory = [];
-function loadHistory(api) {
-  document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="5" style="padding:20px; text-align:center;">Cargando...</td></tr>';
-  api.call("Get", {
-    typeName: "CustomData",
-    search: { customType: "dcdt_history_v1" }
-  }, function(results) {
-    fullHistory = results.map(r => {
-      try { return JSON.parse(r.data); } catch(e) { return null; }
-    }).filter(x => x !== null);
-    
-    // Ordenar desc por fecha
-    fullHistory.sort((a,b) => new Date(b.date) - new Date(a.date));
-    renderHistory();
+// === Función para limpiar todos los campos del formulario ===
+function clearForm() {
+  // Fecha de transporte se pone a hoy
+  document.getElementById('transportDate').valueAsDate = new Date();
+  document.getElementById('loadingDate').value = '';
+
+  // Partes: limpiar buscadores y campos ocultos
+  ['loader', 'carrier', 'recipient'].forEach(type => {
+    const search = document.getElementById(type + 'Search');
+    if (search) search.value = '';
+    ['_name', '_taxId', '_address', '_city', '_province', '_postalCode', '_country'].forEach(suffix => {
+      const el = document.getElementById(type + suffix);
+      if (el) el.value = '';
+    });
   });
+
+  // Vehículo y conductores
+  document.getElementById('transportSetType').value = '3';
+  document.getElementById('plateNumber').value = '';
+  document.getElementById('trailerPlateNumber').value = '';
+  document.getElementById('driver1Name').value = '';
+  document.getElementById('driver1Id').value = '';
+  document.getElementById('driver2Name').value = '';
+  document.getElementById('driver2Id').value = '';
+
+  // Origen y destino
+  ['origin', 'destination'].forEach(type => {
+    const search = document.getElementById(type + 'Search');
+    if (search) search.value = '';
+    ['_name', '_address', '_city', '_province', '_postalCode', '_country'].forEach(suffix => {
+      const el = document.getElementById(type + suffix);
+      if (el) el.value = '';
+    });
+  });
+
+  // Mercancía
+  document.getElementById('cargoDesc').value = '';
+  document.getElementById('cargoWeight').value = '';
+  document.getElementById('cargoWeightUnit').value = 'kg';
+  document.getElementById('cargoPackages').value = '';
+  const cargoNotes = document.getElementById('cargoNotes');
+  if (cargoNotes) cargoNotes.value = '';
+
+  // Opciones
+  document.getElementById('notifyEmail').value = '';
+  document.getElementById('referenceCode').value = '';
+  document.getElementById('leaveAsDraft').checked = false;
+
+  // Ocultar resultado
+  const resultBox = document.getElementById('resultBox');
+  resultBox.style.display = 'none';
+  resultBox.className = 'dcdt-result';
+}
+
+
+// === Historial guardado en localStorage ===
+let fullHistory = [];
+
+function loadHistory() {
+  const stored = localStorage.getItem('dcdt_history');
+  if (stored) {
+    try { fullHistory = JSON.parse(stored); } catch(e) { fullHistory = []; }
+  } else {
+    fullHistory = [];
+  }
+  // Ordenar desc por fecha
+  fullHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+  renderHistory();
+}
+
+function saveHistory() {
+  localStorage.setItem('dcdt_history', JSON.stringify(fullHistory));
+}
+
+function addToHistory(entry) {
+  fullHistory.unshift(entry); // Añadir al principio
+  saveHistory();
 }
 
 function renderHistory() {
@@ -376,7 +436,7 @@ function renderHistory() {
      if (dateFrom && item.date < dateFrom) match = false;
      if (dateTo && item.date > dateTo + 'T23:59:59') match = false;
      if (text) {
-       const str = `${item.vehicle} ${item.driver} ${item.documentId} ${item.reference}`.toLowerCase();
+       const str = `${item.vehicle || ''} ${item.driver || ''} ${item.documentId || ''} ${item.reference || ''}`.toLowerCase();
        if (!str.includes(text)) match = false;
      }
      return match;
@@ -384,18 +444,21 @@ function renderHistory() {
 
   const tbody = document.getElementById('historyTableBody');
   if (filtered.length === 0) {
-     tbody.innerHTML = '<tr><td colspan="5" style="padding:20px; text-align:center;">No se han encontrado documentos.</td></tr>';
+     tbody.innerHTML = '<tr><td colspan="5" style="padding:20px; text-align:center; color:#64748b;">No se han encontrado documentos.</td></tr>';
      return;
   }
 
   tbody.innerHTML = filtered.map(item => {
-     const d = new Date(item.date).toLocaleString();
+     const d = new Date(item.date).toLocaleString('es-ES');
+     const statusBadge = item.draft 
+       ? '<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-size:0.8em;font-weight:600;">Borrador</span>'
+       : '<span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-size:0.8em;font-weight:600;">Emitido</span>';
      return `<tr style="border-bottom: 1px solid #e2e8f0; vertical-align: top;">
        <td style="padding: 12px;">${d}</td>
-       <td style="padding: 12px;"><strong>${item.documentId}</strong><br><span style="font-size:0.85em; color:#64748b;">${item.reference}</span></td>
-       <td style="padding: 12px;">${item.vehicle}</td>
-       <td style="padding: 12px;">${item.driver}</td>
-       <td style="padding: 12px;"><a href="${item.url}" target="_blank" class="btn btn-primary" style="padding:6px 12px; font-size:0.8em; text-decoration:none;">📄 Abrir</a></td>
+       <td style="padding: 12px;"><strong>${item.documentId || '—'}</strong><br><span style="font-size:0.85em; color:#64748b;">${item.reference || ''}</span><br>${statusBadge}</td>
+       <td style="padding: 12px;">${item.vehicle || '—'}</td>
+       <td style="padding: 12px;">${item.driver || '—'}</td>
+       <td style="padding: 12px;">${item.url ? '<a href="' + item.url + '" target="_blank" class="btn btn-primary" style="padding:6px 12px; font-size:0.8em; text-decoration:none;">📄 Abrir</a>' : '—'}</td>
      </tr>`;
   }).join('');
 }
@@ -499,6 +562,19 @@ function generateDCDT(api) {
   .then(data => {
     if (data.success || (data.success === false && data.documentId)) {
        resultBox.classList.add('success');
+       
+       // Guardar en historial local
+       const docData = {
+         documentId: data.documentId || '—',
+         reference: cleanPayload.references?.reference || '',
+         date: new Date().toISOString(),
+         vehicle: cleanPayload.vehicle.plateNumber || '',
+         driver: cleanPayload.driver.fullName || '',
+         url: data.publicUrl || data.pdfUrl || '',
+         draft: !(data.publicUrl || data.pdfUrl)
+       };
+       addToHistory(docData);
+
        if (data.publicUrl || data.pdfUrl) {
          resultStatus.innerText = "¡DCDT Generado Correctamente!";
          resultDetails.innerText = "Documento ID: " + data.documentId + "\nMatrícula: " + cleanPayload.vehicle.plateNumber;
@@ -506,43 +582,6 @@ function generateDCDT(api) {
            resultPdf.href = data.pdfUrl;
            resultPdf.style.display = 'inline-block';
          }
-
-         // Guardar el documento en el Historial de Geotab (CustomData)
-         const docData = {
-           documentId: data.documentId,
-           reference: cleanPayload.references?.reference || '',
-           date: new Date().toISOString(),
-           vehicle: cleanPayload.vehicle.plateNumber,
-           driver: cleanPayload.driver.fullName,
-           url: data.publicUrl || data.pdfUrl
-         };
-         api.call("Add", {
-           typeName: "CustomData",
-           entity: {
-             customType: "dcdt_history_v1",
-             data: JSON.stringify(docData)
-           }
-         });
-
-         // Enviar mensaje al vehículo en Geotab con el link
-         const vehOpt = Array.from(document.getElementById('list-vehicles').options).find(opt => opt.value === cleanPayload.vehicle.plateNumber);
-         if (vehOpt && vehOpt.dataset.deviceid) {
-           api.call("Add", {
-             typeName: "TextMessage",
-             entity: {
-               device: { id: vehOpt.dataset.deviceid },
-               messageContent: {
-                 isText: true,
-                 message: "Nuevo DeCA (DCDT) emitido. Enlace al PDF:\n" + (data.publicUrl || data.pdfUrl)
-               }
-             }
-           }, function(success) {
-             console.log("Mensaje enviado al vehículo correctamente.", success);
-           }, function(err) {
-             console.error("No se pudo enviar el mensaje al vehículo.", err);
-           });
-         }
-
        } else {
          resultStatus.innerText = "Borrador Creado";
          resultDetails.innerText = "Se creó como borrador (ID: " + data.documentId + ").\n\n" + (data.errors ? JSON.stringify(data.errors, null, 2) : "");
