@@ -231,6 +231,7 @@
           </div>
           <input type="hidden" id="origin_name"><input type="hidden" id="origin_address">
           <input type="hidden" id="origin_city"><input type="hidden" id="origin_province"><input type="hidden" id="origin_postalCode"><input type="hidden" id="origin_country">
+          <input type="hidden" id="origin_latitude"><input type="hidden" id="origin_longitude">
         </div>
       </div>
       <div class="col section">
@@ -246,6 +247,7 @@
           </div>
           <input type="hidden" id="destination_name"><input type="hidden" id="destination_address">
           <input type="hidden" id="destination_city"><input type="hidden" id="destination_province"><input type="hidden" id="destination_postalCode"><input type="hidden" id="destination_country">
+          <input type="hidden" id="destination_latitude"><input type="hidden" id="destination_longitude">
         </div>
       </div>
     </div>
@@ -401,6 +403,16 @@
           <div class="form-group col" style="max-width:100px;">
             <label>País</label>
             <input type="text" id="modalLocationCountry" value="ES">
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group col">
+            <label>Latitud</label>
+            <input type="number" step="any" id="modalLocationLat" placeholder="Ej: 43.5322">
+          </div>
+          <div class="form-group col">
+            <label>Longitud</label>
+            <input type="number" step="any" id="modalLocationLng" placeholder="Ej: -5.6611">
           </div>
         </div>
       </div>

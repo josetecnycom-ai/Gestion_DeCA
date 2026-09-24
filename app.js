@@ -128,6 +128,8 @@ function openLocationModal(type, isNew) {
   document.getElementById('modalLocationProvince').value = data.province || '';
   document.getElementById('modalLocationCP').value = data.postalCode || '';
   document.getElementById('modalLocationCountry').value = data.country || 'ES';
+  document.getElementById('modalLocationLat').value = data.latitude || '';
+  document.getElementById('modalLocationLng').value = data.longitude || '';
 
   document.getElementById('locationModal').style.display = 'flex';
 }
@@ -142,7 +144,9 @@ function saveLocationModal() {
     city: document.getElementById('modalLocationCity').value.trim(),
     province: document.getElementById('modalLocationProvince').value.trim(),
     postalCode: document.getElementById('modalLocationCP').value.trim(),
-    country: document.getElementById('modalLocationCountry').value.trim() || 'ES'
+    country: document.getElementById('modalLocationCountry').value.trim() || 'ES',
+    latitude: parseFloat(document.getElementById('modalLocationLat').value) || null,
+    longitude: parseFloat(document.getElementById('modalLocationLng').value) || null
   };
 
   if (!newData.name) { alert("El nombre es obligatorio."); return; }
@@ -191,6 +195,8 @@ function fillHiddenLocationFields(type, searchName) {
     document.getElementById(type + '_province').value = item.province || '';
     document.getElementById(type + '_postalCode').value = item.postalCode || '';
     document.getElementById(type + '_country').value = item.country || 'ES';
+    document.getElementById(type + '_latitude').value = item.latitude || '';
+    document.getElementById(type + '_longitude').value = item.longitude || '';
   }
 }
 
@@ -290,13 +296,29 @@ geotab.addin.dcdtGenerator = function (api, state) {
         });
         document.getElementById('list-drivers').innerHTML = driverHtml;
 
-        // Añadir Zonas a la lista de localizaciones (solo si no existen en memoria para no machacar)
+        // Añadir Zonas a la lista de localizaciones con coordenadas del centroide
         zones.forEach(z => {
            if(z.name && !savedData.locations.find(x => x.name === z.name)) {
+              // Calcular centroide del polígono de la zona
+              let lat = null, lng = null;
+              if (z.points && z.points.length > 0) {
+                // Excluir último punto si es duplicado del primero (polígono cerrado)
+                const pts = (z.points.length > 1 
+                  && z.points[0].x === z.points[z.points.length - 1].x 
+                  && z.points[0].y === z.points[z.points.length - 1].y)
+                  ? z.points.slice(0, -1) 
+                  : z.points;
+                let latSum = 0, lngSum = 0;
+                pts.forEach(p => { latSum += p.y; lngSum += p.x; }); // y=lat, x=lng
+                lat = Math.round((latSum / pts.length) * 10000) / 10000; // 4 decimales
+                lng = Math.round((lngSum / pts.length) * 10000) / 10000;
+              }
               savedData.locations.push({
                 name: z.name,
-                city: '', // Geotab Zones don't have direct city text, user must edit them later
-                country: 'ES' 
+                city: '',
+                country: 'ES',
+                latitude: lat,
+                longitude: lng
               });
            }
         });
@@ -479,18 +501,37 @@ function generateDCDT(api) {
 
   // Helper para construir objetos Party
   const buildParty = (type) => {
-    // Si escribió algo pero no está guardado ni autocompletó los ocultos, forzamos usar el search box como nombre y alertamos si falta ciudad.
     let name = val(type + '_name') || val(type + 'Search');
     if (!name) return undefined;
     return {
       name: name,
       taxId: val(type + '_taxId'),
       address: val(type + '_address'),
-      city: val(type + '_city') || 'No Especificada', // API exige city
+      city: val(type + '_city') || 'No Especificada',
       province: val(type + '_province'),
       postalCode: val(type + '_postalCode'),
       country: val(type + '_country') || 'ES'
     };
+  };
+
+  // Helper para construir objetos Ubicación (origin/destination) con coordenadas
+  const buildLocation = (type) => {
+    let name = val(type + '_name') || val(type + 'Search');
+    if (!name) return undefined;
+    const loc = {
+      name: name,
+      address: val(type + '_address'),
+      city: val(type + '_city') || 'No Especificada',
+      province: val(type + '_province'),
+      postalCode: val(type + '_postalCode'),
+      country: val(type + '_country') || 'ES'
+    };
+    // Añadir coordenadas si existen
+    const lat = num(type + '_latitude');
+    const lng = num(type + '_longitude');
+    if (lat !== undefined && lat !== null) loc.latitude = lat;
+    if (lng !== undefined && lng !== null) loc.longitude = lng;
+    return loc;
   };
 
   const payload = {
@@ -505,8 +546,8 @@ function generateDCDT(api) {
       fullName: val('driver1Name'),
       idNumber: val('driver1Id')
     },
-    origin: buildParty('origin'),
-    destination: buildParty('destination'),
+    origin: buildLocation('origin'),
+    destination: buildLocation('destination'),
     transport: {
       transportDate: val('transportDate')
     },
