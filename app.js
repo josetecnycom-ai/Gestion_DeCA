@@ -343,8 +343,11 @@ geotab.addin.dcdtGenerator = function (api, state) {
                 addresses.forEach((addr, i) => {
                     if (addr) {
                         const loc = coordinatesToGeocode[i]._locRef;
-                        loc.address = (addr.street ? addr.street : '') + (addr.streetNumber ? ' ' + addr.streetNumber : '');
-                        loc.address = loc.address.trim();
+                        let addrText = addr.street || '';
+                        if (addr.streetNumber && !addrText.includes(addr.streetNumber)) {
+                            addrText += ' ' + addr.streetNumber;
+                        }
+                        loc.address = addrText.trim();
                         loc.city = addr.city || '';
                         loc.province = addr.region || '';
                         loc.postalCode = addr.postalCode || '';
