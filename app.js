@@ -128,8 +128,8 @@ function openLocationModal(type, isNew) {
   document.getElementById('modalLocationProvince').value = data.province || '';
   document.getElementById('modalLocationCP').value = data.postalCode || '';
   document.getElementById('modalLocationCountry').value = data.country || 'ES';
-  document.getElementById('modalLocationLat').value = data.latitude || '';
-  document.getElementById('modalLocationLng').value = data.longitude || '';
+  document.getElementById('modalLocationLat').value = (data.latitude !== undefined && data.latitude !== null) ? data.latitude : '';
+  document.getElementById('modalLocationLng').value = (data.longitude !== undefined && data.longitude !== null) ? data.longitude : '';
 
   document.getElementById('locationModal').style.display = 'flex';
 }
@@ -195,8 +195,8 @@ function fillHiddenLocationFields(type, searchName) {
     document.getElementById(type + '_province').value = item.province || '';
     document.getElementById(type + '_postalCode').value = item.postalCode || '';
     document.getElementById(type + '_country').value = item.country || 'ES';
-    document.getElementById(type + '_latitude').value = item.latitude || '';
-    document.getElementById(type + '_longitude').value = item.longitude || '';
+    document.getElementById(type + '_latitude').value = (item.latitude !== undefined && item.latitude !== null) ? item.latitude : '';
+    document.getElementById(type + '_longitude').value = (item.longitude !== undefined && item.longitude !== null) ? item.longitude : '';
   }
 }
 
@@ -499,17 +499,20 @@ function generateDCDT(api) {
     return v === "" ? undefined : Number(v); 
   };
 
+  // Función auxiliar para forzar string vacío si es undefined
+  const strVal = (v) => v === undefined ? '' : v;
+
   // Helper para construir objetos Party
   const buildParty = (type) => {
     let name = val(type + '_name') || val(type + 'Search');
     if (!name) return undefined;
     return {
       name: name,
-      taxId: val(type + '_taxId'),
-      address: val(type + '_address'),
+      taxId: strVal(val(type + '_taxId')),
+      address: strVal(val(type + '_address')),
       city: val(type + '_city') || 'No Especificada',
-      province: val(type + '_province'),
-      postalCode: val(type + '_postalCode'),
+      province: strVal(val(type + '_province')),
+      postalCode: strVal(val(type + '_postalCode')),
       country: val(type + '_country') || 'ES'
     };
   };
@@ -518,19 +521,33 @@ function generateDCDT(api) {
   const buildLocation = (type) => {
     let name = val(type + '_name') || val(type + 'Search');
     if (!name) return undefined;
+
     const loc = {
       name: name,
-      address: val(type + '_address'),
+      address: strVal(val(type + '_address')),
       city: val(type + '_city') || 'No Especificada',
-      province: val(type + '_province'),
-      postalCode: val(type + '_postalCode'),
+      province: strVal(val(type + '_province')),
+      postalCode: strVal(val(type + '_postalCode')),
       country: val(type + '_country') || 'ES'
     };
-    // Añadir coordenadas si existen
+    
+    // Añadir coordenadas en varios formatos porque la API no los documenta
     const lat = num(type + '_latitude');
     const lng = num(type + '_longitude');
-    if (lat !== undefined && lat !== null) loc.latitude = lat;
-    if (lng !== undefined && lng !== null) loc.longitude = lng;
+    if (lat !== undefined && lat !== null) {
+      loc.latitude = lat;
+      loc.lat = lat;
+      loc.latitud = lat;
+    }
+    if (lng !== undefined && lng !== null) {
+      loc.longitude = lng;
+      loc.lng = lng;
+      loc.longitud = lng;
+    }
+    if (lat !== undefined && lat !== null && lng !== undefined && lng !== null) {
+      loc.geolocation = { latitude: lat, longitude: lng, lat: lat, lng: lng };
+      loc.location = { latitude: lat, longitude: lng, lat: lat, lng: lng };
+    }
     return loc;
   };
 
