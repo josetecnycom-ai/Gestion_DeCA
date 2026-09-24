@@ -296,33 +296,69 @@ geotab.addin.dcdtGenerator = function (api, state) {
         });
         document.getElementById('list-drivers').innerHTML = driverHtml;
 
-        // Añadir Zonas a la lista de localizaciones con coordenadas del centroide
+        // Añadir Zonas a la lista de localizaciones y hacer geocodificación inversa
+        const coordinatesToGeocode = [];
+
         zones.forEach(z => {
-           if(z.name && !savedData.locations.find(x => x.name === z.name)) {
-              // Calcular centroide del polígono de la zona
-              let lat = null, lng = null;
-              if (z.points && z.points.length > 0) {
-                // Excluir último punto si es duplicado del primero (polígono cerrado)
-                const pts = (z.points.length > 1 
-                  && z.points[0].x === z.points[z.points.length - 1].x 
-                  && z.points[0].y === z.points[z.points.length - 1].y)
-                  ? z.points.slice(0, -1) 
-                  : z.points;
-                let latSum = 0, lngSum = 0;
-                pts.forEach(p => { latSum += p.y; lngSum += p.x; }); // y=lat, x=lng
-                lat = Math.round((latSum / pts.length) * 10000) / 10000; // 4 decimales
-                lng = Math.round((lngSum / pts.length) * 10000) / 10000;
-              }
-              savedData.locations.push({
+           let existingLoc = savedData.locations.find(x => x.name === z.name);
+           let lat = null, lng = null;
+
+           if (z.points && z.points.length > 0) {
+             const pts = (z.points.length > 1 && z.points[0].x === z.points[z.points.length - 1].x && z.points[0].y === z.points[z.points.length - 1].y) ? z.points.slice(0, -1) : z.points;
+             let latSum = 0, lngSum = 0;
+             pts.forEach(p => { latSum += p.y; lngSum += p.x; });
+             lat = Math.round((latSum / pts.length) * 10000) / 10000;
+             lng = Math.round((lngSum / pts.length) * 10000) / 10000;
+           }
+
+           if (!existingLoc) {
+              existingLoc = {
                 name: z.name,
-                city: '',
-                country: 'ES',
-                latitude: lat,
-                longitude: lng
-              });
+                address: '', city: '', province: '', postalCode: '', country: 'ES',
+                latitude: lat, longitude: lng
+              };
+              savedData.locations.push(existingLoc);
+           } else {
+              // Actualizar coordenadas si no estaban
+              if (existingLoc.latitude === undefined) existingLoc.latitude = lat;
+              if (existingLoc.longitude === undefined) existingLoc.longitude = lng;
+           }
+
+           // Si le falta la dirección física y tenemos coordenadas, la pedimos a Geotab
+           if ((!existingLoc.address || existingLoc.address.trim() === '') && existingLoc.latitude !== null) {
+              coordinatesToGeocode.push({ x: existingLoc.longitude, y: existingLoc.latitude, _locRef: existingLoc });
            }
         });
-        renderDatalists();
+
+        const finalizeZones = () => {
+           saveToLocalStorage('locations');
+           renderDatalists();
+        };
+
+        if (coordinatesToGeocode.length > 0) {
+            // Pedimos a Geotab que nos traduzca las coordenadas a calles/ciudades
+            api.call("GetAddresses", {
+                coordinates: coordinatesToGeocode.map(c => ({ x: c.x, y: c.y }))
+            }, function(addresses) {
+                addresses.forEach((addr, i) => {
+                    if (addr) {
+                        const loc = coordinatesToGeocode[i]._locRef;
+                        loc.address = (addr.street ? addr.street : '') + (addr.streetNumber ? ' ' + addr.streetNumber : '');
+                        loc.address = loc.address.trim();
+                        loc.city = addr.city || '';
+                        loc.province = addr.region || '';
+                        loc.postalCode = addr.postalCode || '';
+                        loc.country = addr.country || 'ES';
+                    }
+                });
+                finalizeZones();
+            }, function(err) {
+                console.error("Error obteniendo direcciones (GetAddresses):", err);
+                finalizeZones(); // Continuamos aunque falle
+            });
+        } else {
+            finalizeZones();
+        }
 
         // Autocompletar DNI de los conductores al seleccionarlos
         const fillDriverId = (inputId, idInputId) => {
